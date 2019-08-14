@@ -15,7 +15,8 @@ class Stpp_Fields_Frontend extends Stpp_Component_Abstract implements Stpp_Field
     const FIELD_USE_SAVED_CARD_1 = 'f_usesavedcard1';
     const FIELD_SAVE_CARD_0 = 'f_savecard0';
     const FIELD_SAVE_CARD_1 = 'f_savecard1';
-    
+    const FIELD_SAVE_CARD_QUESTION = 'f_savecardq';
+
     const FIELD_TYPE_LABEL = 'label';
     const FIELD_TYPE_DESCRIPTION = 'desc';
     
@@ -79,6 +80,10 @@ class Stpp_Fields_Frontend extends Stpp_Component_Abstract implements Stpp_Field
             self::FIELD_SAVE_CARD_1 => array(
                 self::FIELD_TYPE_LABEL              => $this->__('Save my card details securely.'),
                 self::FIELD_TYPE_DESCRIPTION        => $this->__('Select this option to securely save your card details with us.  This allows you to make future purchases quickly and easily.'),
+            ),
+            self::FIELD_SAVE_CARD_QUESTION  => array(
+                self::FIELD_TYPE_LABEL              => $this->__('Save Card Details?'),
+                self::FIELD_TYPE_DESCRIPTION        => $this->__('Would you like to safely store your card details with us? This will allow you to make future purchases quickly and easily.'),
             ),
         );
     }

@@ -1,5 +1,28 @@
+<?php $_code = $this->getMethodCode() ?>
 <fieldset class="form-list">
     <ul id="payment_form_<?php echo $this->getMethodCode(); ?>" style="display:none">
+      <li>
         <?php print $this->getDescription(); ?>
+      </li>
+      <?php if ($this->getUseTokenization()): ?>
+        <li>
+          <label class="required">
+            <?php print $this->getSaveCcDetailsLabel(); ?>
+            <em>*</em>
+          </label>
+        </li>
+	<li class="control">
+  	  <input type="radio" name="payment[securetrading_stpp_redirect_save_cc]" id="<?php print $_code; ?>_save_cc_1" value="1" checked="checked" class="radio" />
+	  <label for="<?php print $_code; ?>_save_cc_1">
+	    <?php print $this->__('Yes'); ?>
+	  </label>
+        </li>
+        <li class="control">
+	  <input type="radio" name="payment[securetrading_stpp_redirect_save_cc]" id="<?php print $_code; ?>_save_cc_0" value="0" class="radio" />
+	  <label for="<?php print $_code; ?>_save_cc_0">
+	    <?php print $this->__('No'); ?>
+	  </label>
+	</li>
+      <?php endif; ?>
     </ul>
 </fieldset>

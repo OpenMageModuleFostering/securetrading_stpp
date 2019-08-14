@@ -3,7 +3,7 @@
 <config>
     <modules>
         <Securetrading_Stpp>
-            <version>3.4.0</version>
+            <version>3.5.0</version>
         </Securetrading_Stpp>
     </modules>
     
@@ -35,9 +35,10 @@
         <secure_url>
             <securetrading_redirect_post_onepage>/securetrading/redirect_post_onepage</securetrading_redirect_post_onepage>
             <securetrading_redirect_post_multishipping>/securetrading/redirect_post_multishipping</securetrading_redirect_post_multishipping>
-			<securetrading_direct_post>/securetrading/direct_post</securetrading_direct_post>
+	    <securetrading_direct_post>/securetrading/direct_post</securetrading_direct_post>
             <securetrading_direct_return>/securetrading/direct/return</securetrading_direct_return>
             <securetrading_payment_location>/securetrading/payment/location</securetrading_payment_location>
+	    <securetrading_tokenization>/securetrading/tokenization</securetrading_tokenization>
         </secure_url>
     </frontend>
 
@@ -101,6 +102,12 @@
                     <transaction_types>
                         <table>securetrading_stpp_transaction_types</table>
                     </transaction_types>
+		    <billing_agreement_currency>
+		      <table>securetrading_stpp_billing_agreement_currency</table>
+		    </billing_agreement_currency>
+		    <billing_agreement_paymenttypedescription>
+		      <table>securetrading_stpp_billing_agreement_paymenttypedescription</table>
+		    </billing_agreement_paymenttypedescription>
                 </entities>
             </securetrading_stpp_resource>
         </models>
@@ -121,7 +128,7 @@
                     </securetrading_stpp>
                 </observers>
             </payment_info_block_prepare_specific_information>
-			<checkout_type_multishipping_create_orders_single>
+	    <checkout_type_multishipping_create_orders_single>
               <observers>
                 <securetrading_stpp>
                   <class>Securetrading_Stpp_Model_Observer</class>
@@ -137,6 +144,14 @@
             		</securetrading_stpp>
             	</observers>
             </adminhtml_init_system_config>
+	    <checkout_type_onepage_save_order_after>
+	      <observers>
+		<securetrading_stpp>
+		  <class>Securetrading_Stpp_Model_Observer</class>
+		  <method>onCheckoutTypeOnepageSaveOrderAfter</method>
+		</securetrading_stpp>
+              </observers>
+	    </checkout_type_onepage_save_order_after>
         </events>
     </global>
     <crontab>
@@ -165,15 +180,25 @@
                     <model>securetrading_stpp/cron::updateOldOrders</model>
                 </run>
             </securetrading_stpp_update_old_orders>
+            <securetrading_stpp_update_sofort_transactions>
+                <schedule>
+                    <cron_expr>0 * * * *</cron_expr>
+                </schedule>
+                <run>
+                    <model>securetrading_stpp/cron::updateSofortTransactions</model>
+                </run>
+            </securetrading_stpp_update_sofort_transactions>
         </jobs>
     </crontab>
     <default>
         <payment>
-			<securetrading_stpp_direct>
-				<model>securetrading_stpp/payment_direct</model>
+	    <securetrading_stpp_direct>
+		<model>securetrading_stpp/payment_direct</model>
+		<payment_action>authorize_capture</payment_action>
                 <accepted_cards backend_model="securetrading_stpp/adminhtml_system_config_backend_multiselect" />
-                <api_iframe_width>100%</api_iframe_width>
-                <api_iframe_height>600px</api_iframe_height>
+                <use_iframe>1</use_iframe>
+		<iframe_width>100%</iframe_width>
+                <iframe_height>600px</iframe_height>
                 <stapi_alias backend_model="adminhtml/system_config_backend_encrypted" />
                 <stapi_host backend_model="adminhtml/system_config_backend_encrypted" />
                 <stapi_port backend_model="adminhtml/system_config_backend_encrypted" />
@@ -185,6 +210,29 @@
                 <transactionsearch_password backend_model="adminhtml/system_config_backend_encrypted" />
                 <transactionsearch_verify_ca>1</transactionsearch_verify_ca>
             </securetrading_stpp_direct>
+	    <securetrading_stpp_tokenization>
+		<model>securetrading_stpp/payment_tokenization</model>
+		<use_iframe>1</use_iframe>
+                <iframe_width>100%</iframe_width>
+                <iframe_height>600px</iframe_height>
+                <accepted_cards backend_model="securetrading_stpp/adminhtml_system_config_backend_multiselect" />
+		<use_risk_decision>0</use_risk_decision>
+		<use_account_check>0</use_account_check>
+		<use_card_store>0</use_card_store>
+		<max_saved_cc>10</max_saved_cc>
+		<!--
+                <stapi_alias backend_model="adminhtml/system_config_backend_encrypted" />
+                <stapi_host backend_model="adminhtml/system_config_backend_encrypted" />
+                <stapi_port backend_model="adminhtml/system_config_backend_encrypted" />
+                <ws_alias backend_model="adminhtml/system_config_backend_encrypted" />
+                <ws_username backend_model="adminhtml/system_config_backend_encrypted" />
+                <ws_password backend_model="adminhtml/system_config_backend_encrypted" />
+                <ws_verify_ca>1</ws_verify_ca>
+                <transactionsearch_username backend_model="adminhtml/system_config_backend_encrypted" />
+                <transactionsearch_password backend_model="adminhtml/system_config_backend_encrypted" />
+                <transactionsearch_verify_ca>1</transactionsearch_verify_ca>
+		-->
+            </securetrading_stpp_tokenization>
             <securetrading_stpp_redirect>
                 <model>securetrading_stpp/payment_redirect</model>
                 <site_security_password backend_model="adminhtml/system_config_backend_encrypted" />

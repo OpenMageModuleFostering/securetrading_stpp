@@ -40,13 +40,39 @@ class Securetrading_Stpp_Model_Actions_Redirect extends Securetrading_Stpp_Model
     }
     
     public function processAuth(Stpp_Data_Response $response) {
-    	$firstOrder = true;
-    	foreach($this->_getOrderIncrementIds($response) as $orderIncrementId) {
-    		$this->setOrder(Mage::getModel('sales/order')->loadByIncrementId($orderIncrementId));
-    		$this->_processAuth($response, $firstOrder);
-    		$firstOrder = false;
-    	}
-    	return $this->_isErrorCodeZero($response);
+      $transaction = Mage::getModel('core_resource/transaction');	  
+      $firstOrder = true;
+      foreach($this->_getOrderIncrementIds($response) as $orderIncrementId) {
+	$this->setOrder(Mage::getModel('sales/order')->loadByIncrementId($orderIncrementId));
+	$this->_processAuth($response, $firstOrder);
+	$firstOrder = false;
+      }
+
+      if ($this->_paymentIsSuccessful($response) && $response->get('savecc')) {
+	$this->_createBillingAgreement($response);
+      }
+      return $this->_isErrorCodeZero($response);
+    }
+
+    protected function _handleSofortPayment(Stpp_Data_Response $response) {
+      $this->_setCoreTransaction($response, false);
+      $order = $this->_getOrder($response);      
+      $order->setState(Mage_Sales_Model_Order::STATE_PENDING_PAYMENT, Securetrading_Stpp_Model_Payment_Abstract::STATUS_PENDING_SOFORT);
+      $order->save();
+    }
+
+    protected function _createBillingAgreement(Stpp_Data_Response $response) {
+      $payment = $this->_getOrder($response)->getPayment();
+      Mage::helper('securetrading_stpp')->addBillingAgreement(
+	$payment->getMethodInstance(),
+	$payment->getOrder()->getCustomerId(),
+	$this->_createSavedCcLabel($payment, $response->get('maskedpan'), $response->get('paymenttypedescription'), $response->get('expirydate'), $response->get('currencyiso3a')),
+	$response->get('transactionreference'),
+	$response->get('paymenttypedescription'),
+	$response->get('currencyiso3a'),
+	$this->_getOrderIncrementIds($response),
+	$payment->getOrder()->getStoreId()
+     );
     }
     
     public function process3dQuery(Stpp_Data_Response $response) {
@@ -89,12 +115,12 @@ class Securetrading_Stpp_Model_Actions_Redirect extends Securetrading_Stpp_Model
     	return $this->_isErrorCodeZero($response);
     }
     
-   	public function _processAuth(Stpp_Data_Response $response, $firstOrder) {
+    public function _processAuth(Stpp_Data_Response $response, $firstOrder) {
         $order = $this->_getOrder($response);
         $payment = $order->getPayment();
         
-        if ($order->getStatus() !== Securetrading_Stpp_Model_Payment_Redirect::STATUS_PENDING_PPAGES) {
-        	throw new Stpp_Exception(sprintf(Mage::helper('securetrading_stpp')->__('The order status for order "%s" was not pending payment pages.'), $order->getIncrementId()));
+	if (!in_array($order->getStatus(), array(Securetrading_Stpp_Model_Payment_Redirect::STATUS_PENDING_PPAGES, Securetrading_Stpp_Model_Payment_Redirect::STATUS_PENDING_SOFORT))) {
+        	throw new Stpp_Exception(sprintf(Mage::helper('securetrading_stpp')->__('The order status for order "%s" was not pending payment pages or pending sofort.'), $order->getIncrementId()));
         }
         
         parent::processAuth($response);
@@ -107,9 +133,9 @@ class Securetrading_Stpp_Model_Actions_Redirect extends Securetrading_Stpp_Model
         
         if ($this->_paymentIsSuccessful($response) || $this->_authShouldEnterPaymentReview($response)) {
         	$payment = $order->getPayment();
-	    	Mage::getModel('securetrading_stpp/payment_redirect')->registerSuccessfulOrderAfterExternalRedirect($order, $this->_getRequestedSettleStatus($response));
+	    	Mage::helper('securetrading_stpp')->registerSuccessfulOrderAfterExternalRedirect($order, $this->_getRequestedSettleStatus($response));
 	    	$emailConfirmation = $response->get('accounttypedescription') === 'MOTO' ? (bool) $response->get('send_confirmation') : true;
-	    	$payment->getMethodInstance()->handleSuccessfulPayment($order, $emailConfirmation);
+		$this->_handleSuccessfulOrder($order, $emailConfirmation);
         }
     }
     
@@ -222,6 +248,7 @@ class Securetrading_Stpp_Model_Actions_Redirect extends Securetrading_Stpp_Model
             'billingcountryiso2a',
             'billingtelephone',
             'billingemail',
+	    'currencyiso3a',
             'customerprefixname',
             'customerfirstname',
             'customerlastname',
@@ -235,6 +262,7 @@ class Securetrading_Stpp_Model_Actions_Redirect extends Securetrading_Stpp_Model
             'customeremail',
             'enrolled',
             'errorcode',
+	    'expirydate',
             'maskedpan',
             'orderreference',
             'parenttransactionreference',
@@ -246,12 +274,14 @@ class Securetrading_Stpp_Model_Actions_Redirect extends Securetrading_Stpp_Model
             'settlestatus',
             'status',
             'transactionreference',
-        	// custom fields:
-        	'errordata',
-        	'errormessage',
-        	'order_increment_ids',
-        	'send_confirmation',
-        	'fraudcontrolshieldstatuscode',
+	    // custom fields:
+	    //'errordata', // Commented out - ST gateway bug? errordata not present on AUTH 7000 notifications.
+	    'errormessage',
+	    'order_increment_ids',
+	    'send_confirmation',
+	    'fraudcontrolshieldstatuscode',
+	    'customer_id',
+	    'savecc',
         );
         
         foreach($fields as $field) {
@@ -259,6 +289,12 @@ class Securetrading_Stpp_Model_Actions_Redirect extends Securetrading_Stpp_Model
                 throw new Stpp_Exception(sprintf(Mage::helper('securetrading_stpp')->__('The "%s" is required.'), $field));
             }
         }
+
+	// Added - ST gateway bug? errordata not present on AUTH 7000 notifications.
+	if (!$response->has('errordata')) {
+	  $response->set('errordata', '');
+	}
+	// End added.
     }
     
     public function checkIsNotificationProcessed($notificationReference) {
@@ -280,5 +316,12 @@ class Securetrading_Stpp_Model_Actions_Redirect extends Securetrading_Stpp_Model
             }
             $response->setRequest($request);
         }
+    }
+
+    protected function _createSavedCcLabel($payment, $maskedPan, $paymentTypeDescription, $expiryDate, $currencyIso3a) {
+      $maskedUntilLast4 = Mage::helper('securetrading_stpp')->maskUntilCcLast4($maskedPan);
+      $paymentType = $payment->getMethodInstance()->getIntegration()->getCardString($paymentTypeDescription);
+      $label = sprintf('%s (%s, %s, %s)', $maskedUntilLast4, $paymentType, $expiryDate, $currencyIso3a);
+      return $label;
     }
 }

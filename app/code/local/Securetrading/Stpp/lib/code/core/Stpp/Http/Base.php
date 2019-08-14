@@ -130,7 +130,9 @@ class Stpp_Http_Base extends Stpp_Component_Abstract implements Stpp_Http_BaseIn
   public function httpPost($requestBody = '') {
   	curl_setopt($this->_ch, CURLOPT_POST, 1);
   	if ($this->_sslCheckCertChainForRevokedCerts) {
-  		$this->addHttpHeader('Content-Length: ' . strlen($requestBody));
+	        $this->addHttpHeader('Content-Length: ' . strlen($requestBody));
+		end($this->_httpHeaders);
+		$contentLengthKey = key($this->_httpHeaders);
   		curl_setopt($this->_ch, CURLOPT_INFILE, fopen('data://text/plain,' . urlencode($requestBody), 'r'));
   		curl_setopt($this->_ch, CURLOPT_INFILESIZE, strlen($requestBody));
   		curl_setopt($this->_ch, CURLOPT_READFUNCTION, array($this, 'curlReadFunction'));
@@ -138,15 +140,24 @@ class Stpp_Http_Base extends Stpp_Component_Abstract implements Stpp_Http_BaseIn
   	else {
   		curl_setopt($this->_ch, CURLOPT_POSTFIELDS, $requestBody);
   	}
+	
 	$this->_prepareCurl();
-  	return $this->_sendAndReceive();
+	$result = $this->_sendAndReceive();
+        if ($this->_sslCheckCertChainForRevokedCerts && $contentLengthKey) {
+	  unset($this->_httpHeaders[$contentLengthKey]);
+        }
+        return $result;
   }
   
   public function httpGet() {
   	$this->_prepareCurl();
   	return $this->_sendAndReceive();
   }
-  
+
+  public function getInfo($curlInfoOptConstant = 0) {
+    return curl_getinfo($this->_ch, $curlInfoOptConstant);
+  }
+
   /**
    * Used as CURLOPT_READFUNCTION callback.  Should not be used by client code.
    */
@@ -173,6 +184,7 @@ class Stpp_Http_Base extends Stpp_Component_Abstract implements Stpp_Http_BaseIn
   }
   
   protected function _sendAndReceive() {
+        $this->_curlReadFunctionCalled = false;
   	$result = $this->_sendAndReceiveWithRetries();
   	$this->_checkResult($result);
   	return $result;

@@ -16,7 +16,7 @@ class Securetrading_Stpp_Sales_Order_Create_SecuretradingController extends Mage
     public function preDispatch() {
         parent::preDispatch();
         if (!in_array($this->getRequest()->getRequestedActionName(), array('redirect', 'location'))) {
-        	Mage::getModel('securetrading_stpp/payment_redirect')->validateOrders($this->_getOrderIncrementIds());
+        	Mage::getModel('securetrading_stpp/payment_redirect')->validateOrdersArePendingPpages($this->_getOrderIncrementIds());
 			$this->_methodInstance = Mage::getModel('securetrading_stpp/payment_redirect')->getFirstMethodInstance($this->_getOrderIncrementIds());
 			$this->_methodInstance->setStore($this->_methodInstance->getInfoInstance()->getOrder()->getStore()->getId());
         }
@@ -61,7 +61,8 @@ class Securetrading_Stpp_Sales_Order_Create_SecuretradingController extends Mage
 		
         Mage::getSingleton('adminhtml/session')->clear();
         
-        if (Mage::helper('securetrading_stpp')->orderIsSuccessful($orderIncrementId)) {
+        if (Mage::getModel('securetrading_stpp/payment_redirect')->orderIsSuccessful($orderIncrementId)) {
+	        Mage::getModel('securetrading_stpp/payment_redirect')->onRedirect(array($orderIncrementId), $this->getRequest()->getParam('errorcode'), $this->getRequest()->getParam('paymenttypedescription'));
         	Mage::getSingleton('adminhtml/session')->addSuccess($this->__('The order has been created.'));
         }
         else {

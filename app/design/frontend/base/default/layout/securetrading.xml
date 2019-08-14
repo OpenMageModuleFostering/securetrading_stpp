@@ -84,4 +84,26 @@
         <remove name="root" />
         <block type="securetrading_stpp/payment_location" name="securetrading_stpp.payment.location" as="location" template="securetrading/stpp/payment/location.phtml" output="toHtml" />
     </securetrading_stpp_payment_location>
+
+
+
+
+    <securetrading_stpp_tokenization_new>
+        <update handle="customer_account"/>
+        <reference name="root">
+            <action method="setTemplate"><template>page/2columns-left.phtml</template></action>
+        </reference>
+        <reference name="my.account.wrapper">
+            <block type="securetrading_stpp/payment_direct_tokenization_form" name="securetrading_stpp.payment.direct.tokenization.form" template="securetrading/stpp/payment/direct/tokenization/form.phtml" />
+        </reference>
+	<reference name="customer_account_navigation">
+	  <action method="setActive"><param>sales/billing_agreement</param></action>
+	</reference>
+    </securetrading_stpp_tokenization_new>
+
+    <checkout_multishipping_success>
+      <reference name="checkout_success">
+	<block type="securetrading_stpp/checkout_multishipping_success_billing_agreement" name="securetrading_stpp.checkout.multishipping.success.billing.agreement" template="securetrading/stpp/checkout/multishipping/success/billing/agreement.phtml" />
+      </reference>
+    </checkout_multishipping_success>
 </layout>

@@ -60,6 +60,17 @@ class Securetrading_Stpp_Block_Adminhtml_Sales_Transactions_Single extends Mage_
         return $this->getTransaction()->getTransactionReference();
     }
     
+    public function replaceIfXReference($transactionReferenceOrXReference) {
+      if (substr($transactionReferenceOrXReference, 0, 1) === 'X') {
+	$filters = $this->getTransaction()->getRequestData('filter');
+	$return = $filters['transactionreference'];
+      }
+      else {
+	$return = $transactionReferenceOrXReference;
+      }
+      return $return;
+    }
+    
     public function hasParentTransaction() {
         return $this->getTransaction()->getParentTransactionId();
     }
@@ -110,7 +121,7 @@ class Securetrading_Stpp_Block_Adminhtml_Sales_Transactions_Single extends Mage_
     }
     
     public function getMystUrl() {
-        return 'https://myst.securetrading.net/transactions/singletransaction?transactionreference=' . urlencode($this->getTransactionReference());
+      return 'https://myst.securetrading.net/transactions/singletransaction?transactionreference=' . urlencode($this->replaceIfXReference($this->getTransactionReference()));
     }
     
     public function getParentTransactionIdUrl($parentTransactionId = '') {

@@ -65,7 +65,7 @@ class Securetrading_Stpp_Model_Transaction extends Mage_Core_Model_Abstract {
     	if ($graceful) {
     		return false;
     	}
-    	throw new Stpp_Exception(Mage::helper('securetrading_stpp')->__('The parent transaction could not be loaded.'));
+    	throw new Exception(Mage::helper('securetrading_stpp')->__('The parent transaction could not be loaded.'));
     }
     
     public function loadByTransactionReference($transactionReference, $graceful = false) {
@@ -75,7 +75,7 @@ class Securetrading_Stpp_Model_Transaction extends Mage_Core_Model_Abstract {
             if ($graceful) {
                 return false;
             }
-            throw new Stpp_Exception(sprintf(Mage::helper('securetrading_stpp')->__('A transaction with a transaction reference of "%s" cannot be found.'), $transactionReference));
+            throw new Exception(sprintf(Mage::helper('securetrading_stpp')->__('A transaction with a transaction reference of "%s" cannot be found.'), $transactionReference));
         }
         return $this;
     }

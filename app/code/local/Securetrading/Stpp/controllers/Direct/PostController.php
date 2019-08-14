@@ -3,21 +3,16 @@
 class Securetrading_Stpp_Direct_PostController extends Mage_Core_Controller_Front_Action {
     protected $_methodInstance;
     
+    const REGISTRY_METHOD_INSTANCE_KEY = 'securetrading_stpp_direct_postcontroller_registry_method_instance_key';
+
     public function preDispatch() {
         parent::preDispatch();
-        
-	if (Mage::getSingleton('checkout/session')->getQuote()->getIsMultiShipping()) {
-	  $orderIncrementId = array_shift(Mage::getModel('core/session')->getOrderIds());
-	}
-	else {
-	  $orderIncrementId = Mage::getModel('checkout/session')->getLastRealOrderId(); //onepage checkout
-	}
-
-        $this->_methodInstance = Mage::getModel('sales/order')->loadByIncrementId($orderIncrementId)->getPayment()->getMethodInstance();
-
-        if ($this->_methodInstance->getCode() !== Mage::getModel('securetrading_stpp/payment_direct')->getCode()) {
-            throw new Exception(Mage::helper('securetrading_stpp')->__('Cannot access payment method.'));
+	$orderIncrementIds = Mage::helper('securetrading_stpp')->getOrderIncrementIdsFromSession();
+        $this->_methodInstance = Mage::getModel('sales/order')->loadByIncrementId(array_shift($orderIncrementIds))->getPayment()->getMethodInstance();
+	if (!Mage::helper('securetrading_stpp')->isSecuretradingApiTypePaymentMethod($this->_methodInstance->getCode())) {
+	    throw new Exception(Mage::helper('securetrading_stpp')->__('Cannot access payment method.'));
         }
+	Mage::register(self::REGISTRY_METHOD_INSTANCE_KEY, $this->_methodInstance);
     }
     
     public function rawAction() {
@@ -31,8 +26,8 @@ class Securetrading_Stpp_Direct_PostController extends Mage_Core_Controller_Fron
     }
     
     public function iframeAction() {
-        Mage::register(Securetrading_Stpp_Block_Payment_Iframe::REGISTRY_IFRAME_HEIGHT_KEY, $this->_methodInstance->getConfigData('api_iframe_height'));
-        Mage::register(Securetrading_Stpp_Block_Payment_Iframe::REGISTRY_IFRAME_WIDTH_KEY, $this->_methodInstance->getConfigData('api_iframe_width'));
+        Mage::register(Securetrading_Stpp_Block_Payment_Iframe::REGISTRY_IFRAME_HEIGHT_KEY, $this->_methodInstance->getConfigData('iframe_height'));
+        Mage::register(Securetrading_Stpp_Block_Payment_Iframe::REGISTRY_IFRAME_WIDTH_KEY, $this->_methodInstance->getConfigData('iframe_width'));
         $this->loadLayout();
         $this->renderLayout();
     }

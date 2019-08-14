@@ -533,6 +533,21 @@ class Stpp_Api_Xml_Writer extends Stpp_Component_Abstract implements Stpp_Api_Xm
                 // <parenttransactionreference></parenttransactionreference>
                 $xmlWriter->writeElement('parenttransactionreference', $request->get('parenttransactionreference'));
 
+		// <customfield1></customfield1>
+		$xmlWriter->writeElement('customfield1', $request->get('customfield1'));
+
+		// <customfield2></customfield2>
+		$xmlWriter->writeElement('customfield2', $request->get('customfield2'));
+
+		// <customfield3></customfield3>
+		$xmlWriter->writeElement('customfield3', $request->get('customfield3'));
+
+		// <customfield4></customfield4>
+		$xmlWriter->writeElement('customfield4', $request->get('customfield4'));
+
+		// <customfield5></customfield5>
+		$xmlWriter->writeElement('customfield5', $request->get('customfield5'));
+
         // </operation>
         $xmlWriter->endElement();
 

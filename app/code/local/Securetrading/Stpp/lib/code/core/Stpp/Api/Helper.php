@@ -5,6 +5,8 @@ class Stpp_Api_Helper extends Stpp_Component_Abstract implements Stpp_Api_Helper
     
     protected $_useRiskDecision = false;
     
+    protected $_useAccountCheck = false;
+
     protected $_useCardStore = false;
     
     protected $_useRiskDecisionAfterAuth = false;
@@ -21,6 +23,11 @@ class Stpp_Api_Helper extends Stpp_Component_Abstract implements Stpp_Api_Helper
         return $this;
     }
     
+    public function setUseAccountCheck($bool) {
+        $this->_useAccountCheck = (bool) $bool;
+        return $this;
+    }
+
     public function setUseCardStore($bool) {
         $this->_useCardStore = (bool) $bool;
         return $this;
@@ -61,6 +68,10 @@ class Stpp_Api_Helper extends Stpp_Component_Abstract implements Stpp_Api_Helper
             $requestTypes[] = Stpp_Types::API_RISKDEC;
         }
 
+	if ($this->_useAccountCheck) {
+	  $requestTypes[] = Stpp_Types::API_ACCOUNTCHECK;
+	}
+	
         if ($this->_use3dSecure && !$this->_adminAction) {
             $requestTypes[] = Stpp_Types::API_THREEDQUERY;
         }
@@ -76,6 +87,13 @@ class Stpp_Api_Helper extends Stpp_Component_Abstract implements Stpp_Api_Helper
 	if ($requestTypes == array(Stpp_Types::API_RISKDEC, Stpp_Types::API_THREEDQUERY, Stpp_Types::API_AUTH)) { // Fix for STPP gateway bug.
 	  $requests[2]->uns('settlestatus');
 	}
+
+	if ($requestTypes == array(Stpp_Types::API_THREEDQUERY, Stpp_Types::API_AUTH)) {
+	  if ($requests[0]->has('parenttransactionreference') && $requests[1]->has('parenttransactionreference')) { // I.e. If tokenization has been used.  We do this because if 3DQ = N/U-enrolled then the AUTH runs and has two PTRs in the gateway: the one defined in the AUTH request and the other implicitly given by the gateway from the THREEDUERY.  The gateway returns 30000 parenttransactionreference on the AUTH without this fix.
+	    $requests[1]->uns('parenttransactionreference');
+	  }
+	}
+
 	return $requests;
     }
 	
@@ -95,12 +113,15 @@ class Stpp_Api_Helper extends Stpp_Component_Abstract implements Stpp_Api_Helper
 			$requestTypes = array(Stpp_Types::API_AUTH);
 		}
 		
+	if ($this->_useCardStore) {
+	  $requestTypes[] = Stpp_Types::API_CARDSTORE;
+	}
+
         $request->set('md', $_POST['MD']);
         $request->set('pares', $_POST['PaRes']);
         $request->set('accounttypedescription', $this->_calculateAccountTypeDescription(Stpp_Types::API_AUTH));
-		
-		return $this->generateRequests($request, $requestTypes);
 
+	return $this->generateRequests($request, $requestTypes);
     }
 	
     public function prepareRefund(Stpp_Data_Request $originalRequest) {
@@ -208,6 +229,9 @@ class Stpp_Api_Helper extends Stpp_Component_Abstract implements Stpp_Api_Helper
                 break;
             case Stpp_Types::API_RISKDEC:
                 $accountType = Stpp_Types::ACCOUNT_FRAUDCONTROL;
+                break;
+            case Stpp_Types::API_ACCOUNTCHECK:
+                $accountType = Stpp_Types::ACCOUNT_ECOM;
                 break;
             case Stpp_Types::API_CARDSTORE:
                 $accountType = Stpp_Types::ACCOUNT_CARDSTORE;

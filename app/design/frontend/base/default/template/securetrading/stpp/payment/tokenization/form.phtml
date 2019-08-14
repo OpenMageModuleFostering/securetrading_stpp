@@ -1,0 +1,22 @@
+<fieldset class="form-list">
+   <?php $_code=$this->getMethodCode() ?>
+  <ul id="payment_form_<?php echo $_code ?>" style="display:none">
+    <li>
+   <span id="<?php print $_code; ?>_description"><?php print $this->getDescription(); ?></span>
+    </li>
+    <li>
+      <label for="<?php print $_code; ?>_transaction_reference" class="required">
+   <?php print $this->getCardNumberLabel(); ?>
+        <em>*</em>
+      </label>
+    </li>
+	<?php foreach($this->getSavedCards() as $card): ?>
+      <li class="control">
+        <input type="radio" name="payment[securetrading_stpp_reference_id]" id="<?php print $_code; ?>_reference_id_<?php print $card->getReferenceId(); ?>" value="<?php print $card->getReferenceId(); ?>" class="radio" />
+        <label for="<?php print $_code; ?>_reference_id_<?php print $card->getReferenceId(); ?>">
+   <?php print $this->getAgreementLabel($card); ?>
+        </label>
+      </li>
+	<?php endforeach; ?>
+  </ul>
+</fieldset>

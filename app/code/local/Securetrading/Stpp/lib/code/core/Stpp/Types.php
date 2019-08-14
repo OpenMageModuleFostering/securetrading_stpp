@@ -6,10 +6,10 @@ class Stpp_Types implements Stpp_TypesInterface {
     const API_AUTH = 'AUTH';
     const API_THREEDQUERY = 'THREEDQUERY';
     const API_RISKDEC = 'RISKDEC';
+    const API_ACCOUNTCHECK = 'ACCOUNTCHECK';
     const API_TRANSACTIONUPDATE = 'TRANSACTIONUPDATE';
     const API_REFUND = 'REFUND';
     const API_CARDSTORE = 'STORE';
-    const API_ACCOUNTCHECK = 'ACCOUNTCHECK';
     
     const ACCOUNT_ECOM = 'ECOM';
     const ACCOUNT_MOTO = 'MOTO';
@@ -33,18 +33,20 @@ class Stpp_Types implements Stpp_TypesInterface {
     const CARD_PRINCIPLE = 'PRINCIPLE';
     const CARD_PURCHASING = 'PURCHASING';
     const CARD_SHOESTUDIO = 'SHOESTUDIO';
+    const CARD_SOFORT = 'SOFORT';
     const CARD_SOLO = 'SOLO';
     const CARD_SWITCH = 'SWITCH';
     const CARD_VISA = 'VISA';
     const CARD_VPAY = 'VPAY';
     const CARD_WAREHOUSE = 'WAREHOUSE';
-    
+
     public static function getRequestAndResponseTypes() {
         return array(
             self::API_ERROR,
             self::API_AUTH,
             self::API_THREEDQUERY,
             self::API_RISKDEC,
+	    self::API_ACCOUNTCHECK,
             self::API_TRANSACTIONUPDATE,
             self::API_REFUND,
             self::API_CARDSTORE,
@@ -79,6 +81,7 @@ class Stpp_Types implements Stpp_TypesInterface {
             self::CARD_PRINCIPLE        => 'Principle',
             self::CARD_PURCHASING       => 'Purchasing',
             self::CARD_SHOESTUDIO       => 'Shoe Studio',
+            self::CARD_SOFORT           => 'Sofort',
             self::CARD_SOLO             => 'Solo',
             self::CARD_SWITCH           => 'Switch',
             self::CARD_VISA             => 'Visa',

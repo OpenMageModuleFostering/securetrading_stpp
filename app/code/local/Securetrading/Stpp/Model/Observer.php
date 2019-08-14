@@ -1,6 +1,17 @@
 <?php
 
 class Securetrading_Stpp_Model_Observer {
+  public function onCheckoutTypeOnepageSaveOrderAfter(Varien_Event_Observer $observer) {
+    if ($observer->getEvent()->getOrder()->getPayment()->getMethodInstance()->getCode() !== Mage::getModel('securetrading_stpp/payment_direct')->getCode()) {
+      return;
+    }
+    $stBillingAgreementId = Mage::getSingleton('checkout/session')->getLastSecuretradingBillingAgreementId();
+    if ($stBillingAgreementId) {
+      Mage::getSingleton('checkout/session')->setLastBillingAgreementId($stBillingAgreementId);
+      Mage::getSingleton('checkout/session')->unsLastSecuretradingBillingAgreementId();
+    }
+  }
+
 	public function onCheckoutSubmitAllAfter(Varien_Event_Observer $observer) {
 		$quote = $observer->getEvent()->getQuote();
 		$methodInstance = $quote->getPayment()->getMethodInstance();
@@ -12,7 +23,7 @@ class Securetrading_Stpp_Model_Observer {
 				$orderIncomplete = true;
 				$methodInstance->log('Multishipping checkout.');
 			}
-			else {
+			else { // onepage checkout
 				$orderIncomplete = (bool) $quote->getPayment()->getOrderPlaceRedirectUrl();
 				$methodInstance->log(sprintf('One page checkout.  Order incomplete: %s.', $orderIncomplete));
 			}
@@ -30,6 +41,7 @@ class Securetrading_Stpp_Model_Observer {
 		$observer->getEvent()->getOrder()->setCanSendNewEmailFlag(false)->save();
 
 		$order = $observer->getEvent()->getOrder();
+		$order->getPayment()->getMethodInstance()->setIsMultishipping(true);
 		$order->getPayment()->getMethodInstance()->setPaymentPlaceWithoutMakingApiRequest(true);
 	}
 	
@@ -55,7 +67,7 @@ class Securetrading_Stpp_Model_Observer {
             $value = $payment->getAdditionalInformation($key);
             $transport->setData($key, $value);
         }
-        
+	
         $transport->setData('payment_type', $payment->getCcType());
         $transport->setData('cc_last_4', $payment->getCcLast4());
         $transport->setData('expiry_month', $payment->getCcExpMonth());
@@ -88,4 +100,4 @@ class Securetrading_Stpp_Model_Observer {
     	$observer->getConfig()->setNode('sections/securetrading_stpp/show_in_website', 0);
     	$observer->getConfig()->setNode('sections/securetrading_stpp/show_in_store', 0);
     }
-}
+ }

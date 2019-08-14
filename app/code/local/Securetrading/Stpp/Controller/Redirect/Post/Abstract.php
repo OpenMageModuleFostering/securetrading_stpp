@@ -7,10 +7,9 @@ abstract class Securetrading_Stpp_Controller_Redirect_Post_Abstract extends Mage
     
     public function preDispatch() {
         parent::preDispatch();
-        
         try {
-			Mage::getModel('securetrading_stpp/payment_redirect')->validateOrders($this->_getOrderIncrementIds());
-			$this->_methodInstance = Mage::getModel('securetrading_stpp/payment_redirect')->getFirstMethodInstance($this->_getOrderIncrementIds());
+	    Mage::getModel('securetrading_stpp/payment_redirect')->validateOrdersArePendingPpages($this->_getOrderIncrementIds());
+	    $this->_methodInstance = Mage::getModel('securetrading_stpp/payment_redirect')->getFirstMethodInstance($this->_getOrderIncrementIds());
         } catch (Exception $e) {
             Mage::logException($e);
             $this->_redirect(null);

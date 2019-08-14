@@ -18,4 +18,8 @@ class Stpp_Facade {
     public function newHelper() {
         return new Stpp_Helper();
     }
+    
+    public function getConfig() {
+      return $this->_config;
+    }
 }

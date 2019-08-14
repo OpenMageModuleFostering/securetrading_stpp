@@ -6,6 +6,7 @@ class Stpp_Api_Xml_Reader extends Stpp_Component_Abstract implements Stpp_Api_Xm
     protected $_responseClassName;
     
     public function __construct($responseClassName) {
+        parent::__construct();
         $this->_responseClassName = $responseClassName;
     }
     
@@ -51,6 +52,9 @@ class Stpp_Api_Xml_Reader extends Stpp_Component_Abstract implements Stpp_Api_Xm
                     break;
                 case Stpp_Types::API_RISKDEC:
                     $this->_parseRiskDecisionResponse($xmlResponse, $response);
+                    break;
+                case Stpp_Types::API_ACCOUNTCHECK:
+                    $this->_parseAccountCheckResponse($xmlResponse, $response);
                     break;
                 case Stpp_Types::API_CARDSTORE:
                     $this->_parseCardStoreResponse($xmlResponse, $response);
@@ -102,6 +106,10 @@ class Stpp_Api_Xml_Reader extends Stpp_Component_Abstract implements Stpp_Api_Xm
         $response->set('accounttypedescription', (string) $xmlResponse->operation->accounttypedescription);
     }
     
+    protected function _parseAccountCheckResponse($xmlResponse, &$response) {
+        $this->_parseAuthOr3dQueryResponse($xmlResponse, $response, false);
+    }
+
     protected function _parseAuthResponse($xmlResponse, &$response) {
         $this->_parseAuthOr3dQueryResponse($xmlResponse, $response, false);
     }
@@ -126,7 +134,7 @@ class Stpp_Api_Xml_Reader extends Stpp_Component_Abstract implements Stpp_Api_Xm
             $response->set('currencyiso3a', (string) $xmlResponse->billing->amount->attributes()->currencycode);
         }
         
-        $response->set('paymenttype', (string) $xmlResponse->billing->payment->attributes()->type);
+        $response->set('paymenttypedescription', (string) $xmlResponse->billing->payment->attributes()->type);
         $response->set('maskedpan', (string) $xmlResponse->billing->payment->pan);
         $response->set('authcode', (string) $xmlResponse->authcode);
         
@@ -146,13 +154,15 @@ class Stpp_Api_Xml_Reader extends Stpp_Component_Abstract implements Stpp_Api_Xm
         $response->set('accounttypedescription', (string) $xmlResponse->operation->accounttypedescription);
         $response->set('settleduedate', (string) $xmlResponse->settlement->settleduedate);
         $response->set('settlestatus', (string) $xmlResponse->settlement->settlestatus);
+
+	$response->set('redirecturl', (string) $xmlResponse->other->redirecturl);
     }
     
     protected function _parseCardStoreResponse($xmlResponse, &$response) {
         $response->set('merchantname', (string) $xmlResponse->merchant->merchantname);
         $response->set('orderreference', (string) $xmlResponse->merchant->orderreference);
         $response->set('transactionreference', (string) $xmlResponse->transactionreference);
-        $response->set('paymenttype', (string) $xmlResponse->billing->payment->attributes()->type);
+        $response->set('paymenttypedescription', (string) $xmlResponse->billing->payment->attributes()->type);
         $response->set('paymentactive', (string) $xmlResponse->billing->payment->active);
         $response->set('maskedpan', (string) $xmlResponse->billing->payment->pan);
         $response->set('live', (string) $xmlResponse->live);
@@ -168,7 +178,7 @@ class Stpp_Api_Xml_Reader extends Stpp_Component_Abstract implements Stpp_Api_Xm
         $response->set('transactionreference', (string) $xmlResponse->transactionreference);
         $response->set('baseamount', (string) $xmlResponse->billing->amount);
         $response->set('currencyiso3a', (string) $xmlResponse->billing->amount->attributes()->currencycode);
-        $response->set('paymenttype', (string) $xmlResponse->billing->payment->attributes()->type);
+        $response->set('paymenttypedescription', (string) $xmlResponse->billing->payment->attributes()->type);
         $response->set('maskedpan', (string) $xmlResponse->billing->payment->pan);
         $response->set('authcode', (string) $xmlResponse->authcode);
         $response->set('securityresponsecode', (string) $xmlResponse->security->securitycode);

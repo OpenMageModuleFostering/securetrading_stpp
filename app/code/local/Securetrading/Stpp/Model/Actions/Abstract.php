@@ -2,6 +2,8 @@
 
 abstract class Securetrading_Stpp_Model_Actions_Abstract extends Stpp_Actions_Abstract {
   protected $_order;
+
+  abstract protected function _handleSofortPayment(Stpp_Data_Response $response);
   
   public function setOrder(Mage_Sales_Model_Order $order) {
     $this->_order = $order;
@@ -23,6 +25,18 @@ abstract class Securetrading_Stpp_Model_Actions_Abstract extends Stpp_Actions_Ab
     }
     $this->setOrder(Mage::getModel('sales/order')->loadByIncrementId($orderIncrementId));
     return $this->_order;
+  }
+  
+  protected function _handleSuccessfulOrder(Mage_Sales_Model_Order $order, $emailConfirmation) {
+    $quote = Mage::getModel('sales/quote')->loadByIdWithoutStore($order->getQuoteId());
+    
+    if ($quote->getIsActive()) {
+      $quote->setIsActive(false)->save();
+    }
+
+    if ($emailConfirmation) {
+      $order->sendNewOrderEmail()->save(); // Send last - even if notif times out order status updated etc.  and payment information updated.
+    }
   }
   
   protected function _getRequestedSettleStatus(Stpp_Data_Response $response) {
@@ -71,10 +85,14 @@ abstract class Securetrading_Stpp_Model_Actions_Abstract extends Stpp_Actions_Ab
 	  }
 	}
       }
+      else if ($response->get('settlestatus') === '10') {
+	$result = false;
+      }
       else {
 	throw new Exception(sprintf(Mage::helper('securetrading_stpp')->__('Invalid settle status: "%s".'), $response->get('settlestatus')));
       }
     }
+    
     return $result;
   }
   
@@ -101,7 +119,7 @@ abstract class Securetrading_Stpp_Model_Actions_Abstract extends Stpp_Actions_Ab
     }
     return $result;
   }
-  //TODO - consistency of auths/captures being open or closed.
+  
   protected function _paymentReviewAndDeny(Stpp_Data_Response $response, Mage_Sales_Model_Order $order) {
     $payment = $order->getPayment();
     $payment->setNotificationResult(true);
@@ -116,6 +134,17 @@ abstract class Securetrading_Stpp_Model_Actions_Abstract extends Stpp_Actions_Ab
     $order->save();
   }
   
+  protected function _isSuccessfulSofortPayment($response) {
+    $result = false;
+    if ($response->get('errorcode') === '0' && $response->get('paymenttypedescription') === Mage::getModel('securetrading_stpp/integration')->getSofortName()) {
+      if ($response->get('settlestatus') !== '10') {
+	throw new Exception(sprintf(Mage::helper('securetrading_stpp')->__('Unexpected settle status: "%s".'), $response->get('settlestatus')));
+      }
+      $result = true;
+    }
+    return $result;
+  }
+
   public function processAuth(Stpp_Data_Response $response) {
     $this->_log($response, sprintf('In %s.', __METHOD__));
     
@@ -132,6 +161,9 @@ abstract class Securetrading_Stpp_Model_Actions_Abstract extends Stpp_Actions_Ab
     }
     else if ($this->_authShouldEnterPaymentReviewAndBeDenied($response)) {
       $this->_paymentReviewAndDeny($response, $order);
+    }
+    else if ($this->_isSuccessfulSofortPayment($response)) {
+      $this->_handleSofortPayment($response);
     }
     else {
       $this->_addGenericErrorToOrderStatusHistory($response, $order);

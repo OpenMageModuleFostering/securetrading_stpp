@@ -39,7 +39,7 @@ class Stpp_Api_Base extends Stpp_Component_Abstract implements Stpp_Api_BaseInte
       $context = $this->getSend()->run($requests);
       $result = $this->getProcess()->run($context);
 
-      $this->_endCardStoreHack($cardStoreRequest); // CARDSTORE HACK.
+      $this->_endCardStoreHack($result, $cardStoreRequest); // CARDSTORE HACK.
 
       return $result;
     }
@@ -47,22 +47,25 @@ class Stpp_Api_Base extends Stpp_Component_Abstract implements Stpp_Api_BaseInte
     // START CARDSTORE HACK.
     protected function _startCardStoreHack(array $requests) {
       $cardStoreRequest = null;
-
-      foreach($requests as $k => $request) {
-        if ($request->get('requesttypedescription') === Stpp_Types::API_CARDSTORE) {
+      if (count($requests) > 1) { // Only run this hack in a multi-requestblock (i.e. so we don't run this hack for standalone CARDSTORE requests).
+	foreach($requests as $k => $request) {
+	  if ($request->get('requesttypedescription') === Stpp_Types::API_CARDSTORE) {
             $cardStoreRequest = $request;
             unset($requests[$k]);
             $requests = array_values($requests);
-        }
+	  }
+	}
       }
       return array($cardStoreRequest, $requests);
     }
 
-    protected function _endCardStoreHack(Stpp_Data_Request $cardStoreRequest = null) {
+    protected function _endCardStoreHack(Stpp_Api_Result $result, Stpp_Data_Request $cardStoreRequest = null) {
       if ($cardStoreRequest) {
-	$requests = array($cardStoreRequest);
-	$context = $this->getSend()->run($requests);
-	$this->getProcess()->run($context);
+	if ($result->getIsTransactionSuccessful()) {
+	  $requests = array($cardStoreRequest);
+	  $context = $this->getSend()->run($requests);
+	  $this->getProcess()->run($context);
+	}
       }
     }
     // END CARDSTORE HACK.

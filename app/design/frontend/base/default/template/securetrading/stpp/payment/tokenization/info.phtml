@@ -1,0 +1,7 @@
+<?php print $this->getTitle(); ?>
+<?php if ($_label = $this->getCardLabel()): ?>
+  <br /><br />
+  <ul>
+     <li>Card: <?php print $_label; ?></li>
+  </ul>
+<?php endif; ?>

@@ -8,6 +8,8 @@ class Stpp_Transactionsearch_Base extends Stpp_Http_Base implements Stpp_Transac
 		'paymentttypedescriptions',
 		'settlestatus',
 		'errorcodes',
+		'transactionreferences',
+		'orderreferences',
 	);
 	
 	protected $_url = 'https://myst.securetrading.net/auto/transactions/transactionsearch?';
@@ -86,7 +88,14 @@ class Stpp_Transactionsearch_Base extends Stpp_Http_Base implements Stpp_Transac
 		$this->_filters[$filterType] = array_fill_keys($filterValue, true);
 		return $this;
 	}
-	
+
+	public function setFilters($filters) {
+	  foreach($filters as $filterType => $filterValue) {
+	    $this->setFilter($filterType, $filterValue);
+	  }
+	  return $this;
+	}
+
 	public function getFilter($filterType) {
 		$this->_validateFilterType($filterType);
 		return $this->_filters[$filterType];
@@ -130,7 +139,11 @@ class Stpp_Transactionsearch_Base extends Stpp_Http_Base implements Stpp_Transac
 	
 	public function httpPost($requestBody = '') {
 		$this->_formUrl();
-		$this->_rawCsvString = parent::httpPost($requestBody);
+		$httpResponseBody = parent::httpPost($requestBody);
+		if (($httpResponseCode = $this->getInfo(CURLINFO_HTTP_CODE)) !== 200) {
+		  throw new Stpp_Exception(sprintf($this->__('Unexpected HTTP response code: "%s".'), $httpResponseCode));
+		}
+		$this->_rawCsvString = $httpResponseBody;
 		$this->_parsedCsvArray = $this->_parseCsv($this->_rawCsvString);
 		return $this;
 	}

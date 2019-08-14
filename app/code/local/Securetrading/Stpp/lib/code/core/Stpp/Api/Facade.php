@@ -45,6 +45,10 @@ class Stpp_Api_Facade extends Stpp_Facade {
             $helper->setUseRiskDecision($this->_config->get('interfaces/api/use_risk_decision'));
         }
 
+	if ($this->_config->has('interfaces/api/use_account_check')) {
+            $helper->setUseAccountCheck($this->_config->get('interfaces/api/use_account_check'));
+        }
+
         if ($this->_config->has('interfaces/api/use_card_store')) {
             $helper->setUseCardStore($this->_config->get('interfaces/api/use_card_store'));
         }
@@ -212,5 +216,12 @@ class Stpp_Api_Facade extends Stpp_Facade {
         $requests = $this->newApiHelper()->prepareRefund($request);
         $result = $this->newApi()->run($requests);
         return $result;
+    }
+
+    public function runApiRequests(array $data, array $requestTypes) {
+      $request = Stpp_Data_Request::instance()->setMultiple($data);
+      $requests = $this->newApiHelper()->generateRequests($request, $requestTypes);
+      $result = $this->newApi()->run($requests);
+      return $result;
     }
 }

@@ -22,6 +22,10 @@ class Securetrading_Stpp_MultishippingController extends Mage_Checkout_Multiship
 	  $order->getPayment()->getMethodInstance()->setIsFirstMultishipping(true);
 	}
 	$order->setQuote(Mage::getModel('sales/quote')->load($order->getQuoteId()));
+      }
+
+      for ($i = 0; $i < count($orders); $i++) { # two loops so is_first_multishipping and is_multishipping set on all orders before this loop begins (first order in this loop makes api request so process*() functions are called)
+	$order = $orders[$i];
 	$order->getPayment()->place();
 	$order->save();
       }
@@ -37,9 +41,11 @@ class Securetrading_Stpp_MultishippingController extends Mage_Checkout_Multiship
   public function overviewPostAction()
   {
     // start st added                    
-    if (!in_array($this->_getCheckout()->getQuote()->getPayment()->getMethodInstance()->getCode(), array('securetrading_stpp_direct', 'securetrading_stpp_redirect'))) {
+    if (!Mage::helper('securetrading_stpp')->isSecuretradingPaymentMethod($this->_getCheckout()->getQuote()->getPayment()->getMethodInstance()->getCode())) {
       return parent::overviewPostAction();
     }
+
+    Mage::getSingleton('checkout/session')->unsLastBillingAgreementId();
     
     $versionInfo = Mage::getVersionInfo();
     $validateFormKey = false;
@@ -85,20 +91,16 @@ class Securetrading_Stpp_MultishippingController extends Mage_Checkout_Multiship
       $this->_getCheckout()->createOrders();
 
       // start st added
-      if ($this->_getCheckout()->getQuote()->getPayment()->getMethodInstance()->getCode() === Mage::getModel('securetrading_stpp/payment_direct')->getCode()) {
+      if (Mage::helper('securetrading_stpp')->isSecuretradingApiTypePaymentMethod($this->_getCheckout()->getQuote()->getPayment()->getMethodInstance()->getCode())) {
 	$this->_doApiMultishippingPayment();
 
       }
-
+      
       $this->_getCheckout()->getQuote()
 	->setIsActive(true)
 	->save();
-      
-      if ($this->_getCheckout()->getQuote()->getPayment()->getMethodInstance()->getCode() === Mage::getModel('securetrading_stpp/payment_redirect')->getCode()) {
-	$path = Mage::getModel('securetrading_stpp/payment_redirect')->getMultishippingRedirectPath();
-	$this->_redirect($path);
-      }
-      else { // direct
+
+      if (Mage::helper('securetrading_stpp')->isSecuretradingApiTypePaymentMethod($this->_getCheckout()->getQuote()->getPayment()->getMethodInstance()->getCode())) {
 	$orderPlaceRedirectUrl = $this->_getCheckout()->getQuote()->getPayment()->getMethodInstance()->getOrderPlaceRedirectUrl();
 	if ($orderPlaceRedirectUrl) {
 	  $this->getResponse()->setRedirect($orderPlaceRedirectUrl);
@@ -110,6 +112,10 @@ class Securetrading_Stpp_MultishippingController extends Mage_Checkout_Multiship
 	  $this->_getCheckout()->getCheckoutSession()->setDisplaySuccess(true);
 	  $this->_redirect('*/*/success');
 	}
+      }
+      else {
+	$path = Mage::getModel('securetrading_stpp/payment_redirect')->getMultishippingRedirectPath();
+	$this->_redirect($path);
       }
       // end st added
     } catch (Mage_Payment_Model_Info_Exception $e) {

@@ -1,0 +1,107 @@
+<div class="page-title">
+   <h1><?php echo $this->__('New Billing Agreement') ?></h1>
+</div>
+<p id="payment_description">
+   <?php print $this->getCardstoreDescription(); ?>
+</p>
+<br />
+
+<form action="<?php print $this->getTokenizationPostUrl(); ?>" method="post">
+    <fieldset class="form-list">    
+   <ul id="payment_form">
+       <li>
+   <label for="payment_type" class="required">
+   <?php print $this->getCardTypeLabel(); ?>
+    <em>*</em>
+    </label>
+    <div class="input-box">
+       <select name="payment_type" id="payment_type" class="required-entry">
+   <option value=""><?php print $this->__('Please select an option...'); ?></option>
+   <?php foreach($this->getAcceptedCards() as $key => $value): ?>
+   <option value="<?php print $key; ?>"><?php print $value; ?></option>
+   <?php endforeach; ?>
+       </select>
+       </div>
+           </li>
+           <li>
+       <label for="card_number" class="required">
+   <?php print $this->getCardNumberLabel(); ?>
+           <em>*</em>
+	   </label>
+	   <div class="input-box">
+       <input type="text" name="card_number" id="card_number" class="required-entry" />
+   </div>
+       </li>
+   <?php if ($this->canShowStartDate()): ?>
+	          <li>
+		     <label for="start_date_month">
+   <?php print $this->getCardStartDateLabel(); ?>
+	          </label>
+		  <div class="input-box">
+       <div class="v-fix">
+   <select name="start_date_month" id="start_date_month" class="month">
+   <?php foreach($this->getMonths() as $k => $v): ?>
+   <option value="<?php print $k; ?>"><?php print $v; ?></option>
+   <?php endforeach; ?>
+       </select>
+           </div>
+           <div class="v-fix">
+   <select name="start_date_year" id="start_date_year" class="year">
+   <?php foreach($this->getStartYears() as $year): ?>
+   <option value="<?php print $year; ?>"><?php print $year; ?></option>
+   <?php endforeach; ?>
+   </select>
+       </div>
+   </div>
+       </li>
+   <?php endif; ?>
+       <li>
+       <label for="expiry_date_month" class="required">
+   <?php print $this->getCardExpiryMonthLabel(); ?>
+           <em>*</em>
+	   </label>
+	   <div class="input-box">
+       <div class="v-fix">
+   <select name="expiry_date_month" id="expiry_date_month" class="month required-entry">
+   <?php foreach($this->getMonths() as $k => $v): ?>
+   <option value="<?php print $k; ?>"><?php print $v; ?></option>
+   <?php endforeach; ?>
+   </select>
+       </div>
+   </div>
+       </li>
+       <li>
+   <label for="expiry_date_year" class="required">
+   <?php print $this->getCardExpiryYearLabel(); ?>
+       <em>*</em>
+       </label>
+       <div class="input-box">
+       <div class="v-fix">
+   <select name="expiry_date_year" id="expiry_date_year" class="year required-entry">
+   <?php foreach($this->getExpiryYears() as $year): ?>
+   <option value="<?php print $year; ?>"><?php print $year; ?></option>
+   <?php endforeach; ?>
+   </select>
+       </div>
+   </div>
+       </li>
+   <?php if ($this->canShowIssueNumber()): ?>
+             <li>
+		<label for="issue_number">
+   <?php print $this->getCardIssueNumberLabel(); ?>
+   </label>
+   <div class="input-box">
+       <input type="text" name="issue_number]" id="issue_number" />
+   </div>
+         </li>
+   <?php endif; ?>
+       <li style="margin-top: 10px;">
+   <div class="input-box">
+       <button class="button" title="<?php print $this->__('Submit'); ?>" type="submit">
+   <span><?php print $this->__('Submit'); ?></span>
+       </button>
+   </div>
+       </li>
+   </ul>
+    </fieldset>
+</form>

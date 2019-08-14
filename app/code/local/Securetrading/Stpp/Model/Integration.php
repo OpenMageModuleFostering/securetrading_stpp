@@ -66,9 +66,10 @@ class Securetrading_Stpp_Model_Integration extends Mage_Core_Model_Abstract {
 	    'active_connection'                 => $paymentMethod->getConfigData('connection'),
 	    'use_3d_secure'                     => $paymentMethod->getConfigData('use_3d_secure'),
 	    'use_risk_decision'                 => $paymentMethod->getConfigData('use_risk_decision'),
+	    'use_account_check'                 => $paymentMethod->getConfigData('use_account_check'),
 	    'use_card_store'                    => $paymentMethod->getConfigData('use_card_store'),
-	    'use_risk_decision_after_auth'      => $paymentMethod->getConfigData('delay_risk_decision'),
-	    'use_auto_card_store'               => $paymentMethod->getConfigData('use_auto_card_store'),
+	    //'use_risk_decision_after_auth'      => $paymentMethod->getConfigData('delay_risk_decision'),
+	    //'use_auto_card_store'               => $paymentMethod->getConfigData('use_auto_card_store'),
 			 )
 			      ),
 	'transactionsearch' => array(
@@ -81,7 +82,7 @@ class Securetrading_Stpp_Model_Integration extends Mage_Core_Model_Abstract {
 				     )
 		      );
     }
-        
+    
     $utilityFacade = Magento_Utility_Facade::instance($config); // Must be done before using any other parts of the STPP framework.
     $fieldFacade = Stpp_Fields_Facade::instance($config);
         
@@ -162,6 +163,30 @@ class Securetrading_Stpp_Model_Integration extends Mage_Core_Model_Abstract {
     return $this;
   }
     
+  public function runApiStandard(Mage_Sales_Model_Order_Payment $payment, $isMoto = false) {
+    $isMoto = $payment->getOrder()->getQuote()->getIsSuperMode();
+    $this->_setOrderToActionInstances($payment->getOrder());
+    $orderIncrementIds = Mage::getModel('core/session')->getOrderIds() ? Mage::getModel('core/session')->getOrderIds() : array($payment->getOrder()->getIncrementId()); //multishipping or onepage
+    $data = $this->getPaymentMethod()->prepareOrderData($payment, $orderIncrementIds);
+    $request = Stpp_Data_Request::instance()->setMultiple($data);
+    $saveCcDetails = $payment->getMethodInstance()->getSession()->getSaveCardDetails();
+    $useCardStore = $saveCcDetails && $payment->getMethodInstance()->getConfigData('use_card_store');
+    $this->_apiFacade->getConfig()->set('interfaces/api/use_card_store', $useCardStore);
+    return $this->_apiFacade->runApiStandard($request, $isMoto);
+  }
+
+  public function runApi3dAuth(array $data = array()) {
+    $request = new Stpp_Data_Request();
+    if (!empty($data)) {
+      $request->setMultiple($data);
+    }
+    $paymentMethod = $this->getPaymentMethod();
+    $saveCcDetails = $paymentMethod->getSession()->getSaveCardDetails();
+    $useCardStore = $saveCcDetails && $paymentMethod->getConfigData('use_card_store');
+    $this->_apiFacade->getConfig()->set('interfaces/api/use_card_store', $useCardStore);
+    return $this->_apiFacade->runApi3dAuth($request);
+  }
+
   public function runApiRefund(Mage_Sales_Model_Order_Payment $payment, array $data) {
     $this->_setOrderToActionInstances($payment->getOrder());
     $request = Stpp_Data_Request::instance()->setMultiple($data);
@@ -173,23 +198,16 @@ class Securetrading_Stpp_Model_Integration extends Mage_Core_Model_Abstract {
     return $this;
   }
     
-  public function runApiStandard(Mage_Sales_Model_Order_Payment $payment, $isMoto = false) {
-    $isMoto = $payment->getOrder()->getQuote()->getIsSuperMode();
-    $this->_setOrderToActionInstances($payment->getOrder());
-    $orderIncrementIds = Mage::getModel('core/session')->getOrderIds() ? Mage::getModel('core/session')->getOrderIds() : array($payment->getOrder()->getIncrementId()); //multishipping or onepage
-    $data = $this->getPaymentMethod()->prepareOrderData($payment, $orderIncrementIds);
-    $request = Stpp_Data_Request::instance()->setMultiple($data);
-    return $this->_apiFacade->runApiStandard($request, $isMoto);
-  }
+
+    public function runApiCardstore(array $data) {
+      return $this->_apiFacade->runApiRequests($data, array(Stpp_Types::API_CARDSTORE));
+    }
+
+    public function runPaymentPages(array $data, $isMoto = false) {
+        $request = Stpp_Data_Request::instance()->setMultiple($data);
+        $result = $this->_ppagesFacade->runPaymentPagesStandard($request, $isMoto);
+        Mage::getModel('securetrading_stpp/payment_redirect_request')->addRequest($this->getPaymentMethod()->getInfoInstance(), $result->getRequest());
     
-  public function runApi3dAuth() {
-    return $this->_apiFacade->runApi3dAuth(new Stpp_Data_Request());
-  }
-    
-  public function runPaymentPages(array $data, $isMoto = false) {
-    $request = Stpp_Data_Request::instance()->setMultiple($data);
-    $result = $this->_ppagesFacade->runPaymentPagesStandard($request, $isMoto);
-    Mage::getModel('securetrading_stpp/payment_redirect_request')->addRequest($this->getPaymentMethod()->getInfoInstance(), $result->getRequest());
         
     $transport = new Varien_Object();
     $transport->setRedirectIsPost($result->getRedirectIsPost());
@@ -253,6 +271,10 @@ class Securetrading_Stpp_Model_Integration extends Mage_Core_Model_Abstract {
   public function getThreedqueryName() {
     return Stpp_Types::API_THREEDQUERY;
   }
+
+  public function getSofortName() {
+    return Stpp_Types::CARD_SOFORT;
+  }
     
   public function getStartYears() {
     return Stpp_Types::getStartYears();
@@ -289,11 +311,27 @@ class Securetrading_Stpp_Model_Integration extends Mage_Core_Model_Abstract {
   public function getCardExpiryDateLabel() {
     return $this->_getFrontendFields()->getLabel(Stpp_Fields_Frontend::FIELD_EXPIRY_DATE);
   }
-    
+
   public function getCardExpiryDateDescription() {
     return $this->_getFrontendFields()->getDescription(Stpp_Fields_Frontend::FIELD_EXPIRY_DATE);
   }
     
+  public function getCardExpiryMonthLabel() {
+    return $this->_getFrontendFields()->getLabel(Stpp_Fields_Frontend::FIELD_EXPIRY_MONTH);
+  }	       
+    
+  public function getCardExpiryMonthDescription() {
+    return $this->_getFrontendFields()->getDescription(Stpp_Fields_Frontend::FIELD_EXPIRY_MONTH);
+  }
+  
+  public function getCardExpiryYearLabel() {
+    return $this->_getFrontendFields()->getLabel(Stpp_Fields_Frontend::FIELD_EXPIRY_YEAR);
+  }
+  
+  public function getCardExpiryYearDescription() {
+    return $this->_getFrontendFields()->getDescription(Stpp_Fields_Frontend::FIELD_EXPIRY_YEAR);
+  }
+  
   public function getCardSecurityCodeLabel() {
     return $this->_getFrontendFields()->getLabel(Stpp_Fields_Frontend::FIELD_SECURITY_CODE);
   }
@@ -305,7 +343,15 @@ class Securetrading_Stpp_Model_Integration extends Mage_Core_Model_Abstract {
   public function getCardIssueNumberLabel() {
     return $this->_getFrontendFields()->getLabel(Stpp_Fields_Frontend::FIELD_ISSUE_NUMBER);
   }
-    
+  
+  public function getSaveCcDetailsLabel() {
+    return $this->_getFrontendFields()->getLabel(Stpp_Fields_Frontend::FIELD_SAVE_CARD_QUESTION);
+  }
+  
+  public function getSaveCcDetailsDescription() {
+    return $this->_getFrontendFields()->getDescription(Stpp_Fields_Frontend::FIELD_SAVE_CARD_QUESTION);
+  }
+   
   public function getCardIssueNumberDescription() {
     return $this->_getFrontendFields()->getDescription(Stpp_Fields_Frontend::FIELD_ISSUE_NUMBER);
   }

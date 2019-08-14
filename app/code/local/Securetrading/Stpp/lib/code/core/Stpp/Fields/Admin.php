@@ -24,6 +24,7 @@ class Stpp_Fields_Admin extends Stpp_Component_Abstract implements Stpp_Fields_A
     const FIELD_API_ALL_CONNECTION = 'f_api_a_con';
     const FIELD_API_ALL_USE_3D_SECURE = 'f_api_a_use3d';
     const FIELD_API_ALL_USE_RISK_DECISION = 'f_api_a_userd';
+    const FIELD_API_ALL_USE_ACCOUNT_CHECK = 'f_api_a_useac';
     const FIELD_API_ALL_USE_CARD_STORE = 'f_api_a_usecs';
     const FIELD_API_ALL_USE_AUTO_CARD_STORE = 'f_api_a_autocs';
     const FIELD_API_ALL_DELAY_RISK_DECISION = 'f_api_a_delayrd';
@@ -133,6 +134,10 @@ class Stpp_Fields_Admin extends Stpp_Component_Abstract implements Stpp_Fields_A
             self::FIELD_API_ALL_USE_RISK_DECISION => array(
                 self::FIELD_TYPE_NAME               => $this->__('Use Risk Decision'),
                 self::FIELD_TYPE_DESCRIPTION        => $this->__('Enabling Risk Decision requests will reduce the possibility of fraudulent transactions by comparing a customer transaction against a fraud-check database and suspending suspicious transactions. Risk Decision requests must be enabled on your Secure Trading account before you can use this feature.'),
+            ),
+            self::FIELD_API_ALL_USE_ACCOUNT_CHECK => array(
+                self::FIELD_TYPE_NAME               => $this->__('Use Account Check'),
+                self::FIELD_TYPE_DESCRIPTION        => $this->__('Account Check requests must be enabled on your Secure Trading account before you can use this feature.'),
             ),
             self::FIELD_API_ALL_USE_CARD_STORE => array(
                 self::FIELD_TYPE_NAME               => $this->__('Use Card Store'),

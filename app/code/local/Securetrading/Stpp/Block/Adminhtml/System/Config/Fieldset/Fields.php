@@ -120,10 +120,6 @@ class Securetrading_Stpp_Block_Adminhtml_System_Config_Fieldset_Fields
                         $label = $fields->getLabel(Stpp_Fields_Admin::FIELD_PPG_USE_API);
                         $tooltip = $fields->getDescription(Stpp_Fields_Admin::FIELD_PPG_USE_API);
                         break;
-                    case 'ppg_use_iframe':
-                        $label = $fields->getLabel(Stpp_Fields_Admin::FIELD_PPG_USE_IFRAME);
-                        $tooltip = $fields->getDescription(Stpp_Fields_Admin::FIELD_PPG_USE_IFRAME);
-                        break;
                     case 'connection':
                         $label = $fields->getLabel(Stpp_Fields_Admin::FIELD_API_ALL_CONNECTION);
                         $tooltip = $fields->getDescription(Stpp_Fields_Admin::FIELD_API_ALL_CONNECTION);
@@ -135,6 +131,10 @@ class Securetrading_Stpp_Block_Adminhtml_System_Config_Fieldset_Fields
                     case 'use_risk_decision':
                         $label = $fields->getLabel(Stpp_Fields_Admin::FIELD_API_ALL_USE_RISK_DECISION);
                         $tooltip = $fields->getDescription(Stpp_Fields_Admin::FIELD_API_ALL_USE_RISK_DECISION);
+                        break;
+		    case 'use_account_check':
+                        $label = $fields->getLabel(Stpp_Fields_Admin::FIELD_API_ALL_USE_ACCOUNT_CHECK);
+                        $tooltip = $fields->getDescription(Stpp_Fields_Admin::FIELD_API_ALL_USE_ACCOUNT_CHECK);
                         break;
                     case 'use_card_store':
                         $label = $fields->getLabel(Stpp_Fields_Admin::FIELD_API_ALL_USE_CARD_STORE);
@@ -151,10 +151,6 @@ class Securetrading_Stpp_Block_Adminhtml_System_Config_Fieldset_Fields
                     case 'accepted_cards':
                         $label = $fields->getLabel(Stpp_Fields_Admin::FIELD_API_ALL_ACCEPTED_CARDS);
                         $tooltip = $fields->getDescription(Stpp_Fields_Admin::FIELD_API_ALL_ACCEPTED_CARDS);
-                        break;
-                    case 'api_use_iframe':
-                        $label = $fields->getLabel(Stpp_Fields_Admin::FIELD_API_ALL_USE_IFRAME);
-                        $tooltip = $fields->getDescription(Stpp_Fields_Admin::FIELD_API_ALL_USE_IFRAME);
                         break;
                     case 'stapi_alias':
                         $label = $fields->getLabel(Stpp_Fields_Admin::FIELD_API_STAPI_ALIAS);
@@ -204,6 +200,14 @@ class Securetrading_Stpp_Block_Adminhtml_System_Config_Fieldset_Fields
                     	$label = $fields->getLabel(Stpp_Fields_Admin::FIELD_TRANSACTIONSEARCH_CA_FILE);
                     	$tooltip = $fields->getDescription(Stpp_Fields_Admin::FIELD_TRANSACTIONSEARCH_CA_FILE);
                     	break;
+                    case 'ppg_use_iframe':
+                        $label = $fields->getLabel(Stpp_Fields_Admin::FIELD_PPG_USE_IFRAME);
+                        $tooltip = $fields->getDescription(Stpp_Fields_Admin::FIELD_PPG_USE_IFRAME);
+                        break;
+		    case 'use_iframe':
+                        $label = $fields->getLabel(Stpp_Fields_Admin::FIELD_API_ALL_USE_IFRAME);
+                        $tooltip = $fields->getDescription(Stpp_Fields_Admin::FIELD_API_ALL_USE_IFRAME);
+                        break;
                     // The following are not retrieved from the framework but are here so the text is not duplicated across the different interfaces in system.xml.
                     case 'active':
                         $label = $this->__('Enabled');
@@ -226,12 +230,12 @@ class Securetrading_Stpp_Block_Adminhtml_System_Config_Fieldset_Fields
                         $tooltip = $this->__('If \'Applicable Countries\' is set to \'Specific Countries\' this list will determine which country this payment method can be used in.');
                         break;
                     case 'ppg_iframe_height':
-                    case 'api_iframe_height':
+                    case 'iframe_height':
                         $label = $this->__('Iframe Height');
                         $tooltip = $this->__('The height of the iframe.  Enter one or more numbers followed by "px" or "%".');
                         break;
                     case 'ppg_iframe_width':
-                    case 'api_iframe_width':
+                    case 'iframe_width':
                         $label = $this->__('Iframe Width');
                         $tooltip = $this->__('The width of the iframe.  Enter one or more numbers followed by "px" or "%".');
                         break;
@@ -243,6 +247,26 @@ class Securetrading_Stpp_Block_Adminhtml_System_Config_Fieldset_Fields
                     	$label = $this->__('Show Issue Number');
                     	$tooltip = $this->__('Enable this option to show the issue number input field on the payment form.');
                     	break;
+		    case 'allow_billing_agreement_wizard':
+		        $label = $this->__('Use Billing Agreement Wizard');
+		        $tooltip = $this->__('Enable this option to allow users to create new billing agreements through the customer account management area.');
+		        break;
+		    case 'use_tokenization':
+		      $label = $this->__('Use Tokenization');
+		      $tooltip = $this->__('Using tokenization will allow customers who place orders with this payment method to make easy future repeat purchases through the Secue Trading Tokenization payment method.');
+		      break;
+		    case 'max_saved_cc':
+		      $label = $this->__('Max # of Saved Cards');
+		      $tooltip = $this->__('The number you enter here is the maximum number of cards (billing agreements) your customers can save per store.');
+		      break;
+		    case 'save_cc_question':
+		      $label = $this->__('"Save CC details?" Question');
+		      $tooltip = $this->__('What you will ask your customers when you suggest they save their card details with your store for easy future order placement.');
+		      break;
+		    case 'config_fallback':
+		      $label = $this->__('Config Inheritance');
+		      $tooltip = $this->__('Defines which payment method to inherit certain configuration values from.');
+		      break;
                     default:
                         $label = $e->getLabel();
                         $tooltip = $e->getTooltip();

@@ -5,11 +5,23 @@ abstract class Securetrading_Stpp_Model_Payment_Abstract extends Mage_Payment_Mo
   const STATUS_SUSPENDED  = 'suspended';
   const STATUS_PENDING_PPAGES = 'pending_ppages';
   const STATUS_PENDING_3DSECURE = 'pending_3dsecure';
-    
+  const STATUS_PENDING_SOFORT = 'pending_sofort';
+  const STATUS_PROCESSING_SOFORT = 'processing_sofort';
+  
+  protected function _getBackendHandler($transactionReference) {
+    return Mage::getModel('securetrading_stpp/payment_handler_backend_factory', array('transaction_reference' => $transactionReference, 'method_instance' => $this))->getHandler();
+  }
+
+  protected function _captureAuthorized(Mage_Sales_Model_Order_Payment $payment, $amount) {
+    $this->log(sprintf('In %s.', __METHOD__));
+    $this->_getBackendHandler($payment->getCcTransId())->captureAuthorized($payment, $amount);
+    return $this;
+  }
+  
   final public function getIsSecuretradingPaymentMethod() {
     return true;
   }
-    
+
   public function getIntegration() {
     return Mage::getModel('securetrading_stpp/integration', array('payment_method' => $this));
   }
@@ -27,7 +39,28 @@ abstract class Securetrading_Stpp_Model_Payment_Abstract extends Mage_Payment_Mo
     $this->getIntegration()->getDebugLog()->log($message);
     return $this;
   }
-    
+
+  public function refund(Varien_Object $payment, $amount) {
+    $this->log(sprintf('In %s.', __METHOD__));
+    parent::refund($payment, $amount);
+    $this->_getBackendHandler($payment->getCcTransId())->refund($payment, $amount);
+    return $this;
+  }
+
+  public function acceptPayment(Mage_Payment_Model_Info $payment) {
+    $this->log(sprintf('In %s.', __METHOD__));
+    parent::acceptPayment($payment);
+    $this->_getBackendHandler($payment->getCcTransId())->acceptPayment($payment);
+    return true;
+  }
+
+  public function denyPayment(Mage_Payment_Model_Info $payment) {
+    $this->log(sprintf('In %s.', __METHOD__));
+    parent::denyPayment($payment);
+    $this->_getBackendHandler($payment->getCcTransId())->denyPayment($payment);
+    return true;
+  }
+  
   public function prepareOrderData(Mage_Sales_Model_Order_Payment $payment, array $orderIncrementIds, $sendEmailConfirmation = true) {
     $order = $payment->getOrder();
     $billingAddress = $order->getBillingAddress();
@@ -68,6 +101,9 @@ abstract class Securetrading_Stpp_Model_Payment_Abstract extends Mage_Payment_Mo
       'settleduedate'             => $this->getConfigData('settle_due_date'),
       'settlestatus'              => $this->getConfigData('payment_action') === Mage_Payment_Model_Method_Abstract::ACTION_AUTHORIZE ? 2 : $this->getConfigData('settle_status'),
       'orderreference'            => $order->getIncrementId(),
+
+      'customfield4'             => $this->_getCartInformation(),
+      'customfield5'             => $this->_getVersionInformation(),
 		  );
         
     if ($order->getShippingMethod()) {
@@ -91,38 +127,19 @@ abstract class Securetrading_Stpp_Model_Payment_Abstract extends Mage_Payment_Mo
 	'customercounty'            => $customerCounty,
 	'customerpostcode'          => $customerAddress->getPostcode(),
 	'customercountryiso2a'      => $customerAddress->getCountry(),
-		     );
+      );
     }
     return $data;
   }
-    
-  public function registerSuccessfulOrderAfterExternalRedirect(Mage_Sales_Model_Order $order, $requestedSettleStatus) {
-    $this->log(sprintf('In %s.', __METHOD__));
 
-    $amount = $order->getPayment()->getBaseAmountOrdered();
-        
-    if (in_array($requestedSettleStatus, array('0', '1', '100'))) {
-      $order->getPayment()->registerCaptureNotification($amount, true);
-    }
-    elseif($requestedSettleStatus === '2') {
-      $order->getPayment()->registerAuthorizationNotification($amount);
-    }
-    else {
-      throw new Exception(sprintf('Invalid settle status: "%s".', $requestedSettleStatus));
-    }
-    $order->save();
+  protected function _getCartInformation() {
+    return 'MAGENTO';
   }
-    
-  public function handleSuccessfulPayment(Mage_Sales_Model_Order $order, $emailConfirmation) {
-    $this->log(sprintf('In %s.', __METHOD__));
-    $quote = Mage::getModel('sales/quote')->loadByIdWithoutStore($order->getQuoteId());
-    
-    if ($quote->getIsActive()) {
-      $quote->setIsActive(false)->save();
-    }
-    
-    if ($emailConfirmation) {
-      $order->sendNewOrderEmail()->save(); // Send last - even if notif times out order status updated etc.  and payment information updated.
-    }
+
+  protected function _getVersionInformation() {
+    $stppVersion = (string) Mage::getConfig()->getModuleConfig('Securetrading_Stpp')->version;
+    $multishippingVersion = (string) Mage::getConfig()->getModuleConfig('Securetrading_Multishipping')->version;
+    $str = sprintf('Magento %s %s (Securetrading_Stpp-%s Securetrading_Multishipping-%s)', Mage::getEdition(), Mage::getVersion(), $stppVersion, $multishippingVersion);
+    return $str;
   }
 }

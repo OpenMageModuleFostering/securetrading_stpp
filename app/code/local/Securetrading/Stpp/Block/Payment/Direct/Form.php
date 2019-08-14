@@ -5,13 +5,25 @@ class Securetrading_Stpp_Block_Payment_Direct_Form extends Mage_Payment_Block_Fo
         $this->setTemplate('securetrading/stpp/payment/direct/form.phtml');
         parent::_construct();
     }
-    
+
     protected function _getIntegration() {
         return $this->getMethod()->getIntegration();
     }
     
     public function getDescription() {
         return $this->getMethod()->getConfigData('description');
+    }
+
+    public function getSaveCcDetailsLabel() {
+      $question = $this->getMethod()->getConfigData('save_cc_question');
+      if (empty($question)) {
+	$question = $this->_getIntegration()->getSaveCcDetailsLabel();
+      }
+      return $question;
+    }
+
+    public function getSaveCcDetailsDescription() {
+      return $this->_getIntegration()->getSaveCcDetailsDescription();
     }
     
     public function getAcceptedCards() {
@@ -63,6 +75,21 @@ class Securetrading_Stpp_Block_Payment_Direct_Form extends Mage_Payment_Block_Fo
         return $this->_getIntegration()->getCardExpiryDateDescription();
     }
     
+    public function getCardExpiryMonthLabel() {
+        return $this->_getIntegration()->getCardExpiryMonthLabel();
+    }
+    
+    public function getCardExpiryMonthDescription() {
+        return $this->_getIntegration()->getCardExpiryMonthDescription();
+    }
+
+    public function getCardExpiryYearLabel() {
+        return $this->_getIntegration()->getCardExpiryYearLabel();
+    }
+    
+    public function getCardExpiryYearDescription() {
+        return $this->_getIntegration()->getCardExpiryYearDescription();
+    }
     public function getCardSecurityCodeLabel() {
         return $this->_getIntegration()->getCardSecurityCodeLabel();
     }
@@ -85,5 +112,16 @@ class Securetrading_Stpp_Block_Payment_Direct_Form extends Mage_Payment_Block_Fo
     
     public function canShowIssueNumber() {
     	return (bool) $this->getMethod()->getConfigData('show_issue_number');
+    }
+    
+    protected function _canSaveCards() {
+      $tokenizationMethod = Mage::getModel('securetrading_stpp/payment_tokenization');
+      $collection = $tokenizationMethod->getSavedCardsCollection();
+      return $tokenizationMethod->canSaveCards($collection);
+    }
+
+    public function getUseCardStore() {
+      $customerExists = $this->getMethod()->getInfoInstance()->getQuote()->getCustomerId();
+      return $this->getMethod()->getConfigData('use_card_store') && $this->_canSaveCards() && $customerExists;
     }
 }
