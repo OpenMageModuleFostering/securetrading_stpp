@@ -154,4 +154,11 @@ class Securetrading_Stpp_Helper_Data extends Mage_Core_Helper_Abstract {
     }
     $order->save();
   }
+
+  public function mask($string) {
+    $toMask = substr($string, 0, -4);
+    $masked = str_repeat('#', strlen($toMask));
+    $trailing = substr($string, -4);
+    return $masked . $trailing;
+  }
 }

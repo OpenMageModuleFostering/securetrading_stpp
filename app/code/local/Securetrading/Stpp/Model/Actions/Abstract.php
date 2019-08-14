@@ -308,12 +308,20 @@ abstract class Securetrading_Stpp_Model_Actions_Abstract extends Stpp_Actions_Ab
     $transactionId = $response->get('transactionreference') ? $response->get('transactionreference') : $response->get('responseblockrequestreference');
     $parentTransactionId !== null ? $parentTransactionId : null;
      
+    $requestData = $response->getRequest()->toArray();
+    if (array_key_exists('pan', $requestData)) {
+      $requestData['pan'] = Mage::helper('securetrading_stpp')->mask($requestData['pan']);
+    }
+    if (array_key_exists('securitycode', $requestData)) {
+      $requestData['securitycode'] = '';
+    }
+
     $payment->setTransactionId($transactionId);
     $payment->setParentTransactionId($parentTransactionId);
     $payment->setTransactionAdditionalInfo(Mage_Sales_Model_Order_Payment_Transaction::RAW_DETAILS,
       $this->_flattenArray(
 	array(
-	  'Request' => $response->getRequest()->toArray(),
+	  'Request' => $requestData,
 	  'Response' => $response->toArray()
 	      )
 			   )

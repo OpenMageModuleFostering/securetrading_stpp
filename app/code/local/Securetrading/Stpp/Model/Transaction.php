@@ -33,6 +33,12 @@ class Securetrading_Stpp_Model_Transaction extends Mage_Core_Model_Abstract {
     }
     
     public function setRequestData(array $data = array()) {
+      if (array_key_exists('pan', $data)) {
+	$data['pan'] = Mage::helper('securetrading_stpp')->mask($data['pan']);
+      }
+      if (array_key_exists('securitycode', $data)) {
+	$data['securitycode'] = '';
+      }
         return $this->_setApiData('request_data', $data);
     }
     
