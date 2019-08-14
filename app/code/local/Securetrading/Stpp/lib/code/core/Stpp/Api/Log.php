@@ -18,6 +18,8 @@ class Stpp_Api_Log extends Stpp_Utility_Log_User_Abstract implements Stpp_Api_Lo
             return;
         }
         $request = $response->getRequest();
+	$request = clone $request;
+
         $request->removeSecureData();
         
         $message = 'Request' . ':';

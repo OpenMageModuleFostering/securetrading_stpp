@@ -178,6 +178,7 @@ abstract class Securetrading_Stpp_Model_Actions_Abstract extends Stpp_Actions_Ab
       ->setAdditionalInformation('security_code', $response->get('securityresponsesecuritycode'))
       ->setAdditionalInformation('enrolled', $response->get('enrolled'))
       ->setAdditionalInformation('status', $response->get('status'))
+      ->setAdditionalInformation('authcode', $response->get('authcode'))
       ->setCcTransId($response->get('transactionreference'))
       ->setCcLast($payment->getMethodInstance()->getIntegration()->getCcLast4($response->get('maskedpan')))
       ;
@@ -258,7 +259,7 @@ abstract class Securetrading_Stpp_Model_Actions_Abstract extends Stpp_Actions_Ab
     }
     $responseData = $response->toArray();
     $requestData = $response->getRequest()->toArray();
-        
+
     $requestTypeDescription = $response->getRequest()->get('requesttypedescription') ?: $response->get('requesttypedescription'); // look in request object for api, response object for ppg.
     $requestType = $this->_mapRequestType($requestTypeDescription);
         

@@ -21,7 +21,9 @@ class Securetrading_Stpp_Model_Payment_Redirect extends Securetrading_Stpp_Model
   protected $_canReviewPayment            = true;
   protected $_canCreateBillingAgreement   = true;
   protected $_canManageRecurringProfiles  = false;
-  
+
+  protected $_isMoto = false;
+
   public function __construct() {
     if ($this->getConfigData('use_api')) {
       $this->_canCapturePartial = true;
@@ -57,24 +59,130 @@ class Securetrading_Stpp_Model_Payment_Redirect extends Securetrading_Stpp_Model
   
   public function prepareOrderData(Mage_Sales_Model_Order_Payment $payment, array $orderIncrementIds, $sendEmailConfirmation = true) {
     $this->log(sprintf('In %s.', __METHOD__));
+    $saveCc = Mage::getSingleton('securetrading_stpp/payment_redirect_session')->getSaveCardDetails();
+
     $data = parent::prepareOrderData($payment, $orderIncrementIds);
     $data += array(
       'customfield1' 		=> $payment->getOrder()->getStoreId(),
-      'parentcss'     		=> $this->getConfigData('parent_css'),
-      'childcss'      		=> $this->getConfigData('child_css'),
-      'parentjs'      		=> $this->getConfigData('parent_js'),
-      'childjs'       		=> $this->getConfigData('child_js'),
-      //'subsitereference'          => $this->getConfigData('sub_site_reference'),
       '_charset_'     		=> Mage::getStoreConfig('design/head/default_charset'),
-      'order_increment_ids' 	=> serialize($orderIncrementIds),
-      'send_confirmation' 	=> $sendEmailConfirmation,
-      'customer_id'               => Mage::getSingleton('customer/session')->getCustomerId(),
-      'savecc'                    => Mage::getSingleton('securetrading_stpp/payment_redirect_session')->getSaveCardDetails(),
+      'version'                 => $this->getConfigData('ppg_version'),
+      'using_new_strs'          => '1',
+      // Start: These fields still required for merchants who haven't yet disabled their old notifications/redirects (the merchant's custom notification fails straight away but the custom redirect takes precendence over the STR).
+      'order_increment_ids'     => serialize($orderIncrementIds),
+      'send_confirmation'       => $sendEmailConfirmation,
+      'customer_id'             => Mage::getSingleton('customer/session')->getCustomerId(),
+      'savecc'                  => $saveCc,
+      // End
+      'stextraurlnotifyfields'  => array(
+	'authcode',
+	'accounttypedescription',
+	'billingprefixname',
+	'billingfirstname',
+	'billinglastname',
+	'billingpremise',
+	'billingstreet',
+	'billingtown',
+	'billingcounty',
+	'billingpostcode',
+	'billingcountryiso2a',
+	'billingtelephone',
+	'billingemail',
+	'currencyiso3a',
+	'customerprefixname',
+	'customerfirstname',
+	'customerlastname',
+	'customerpremise',
+	'customerstreet',
+	'customertown',
+	'customercounty',
+	'customerpostcode',
+	'customercountryiso2a',
+	'customertelephone',
+	'customeremail',
+	'enrolled',
+	'errorcode',
+	'expirydate',
+	'maskedpan',
+	'orderreference',
+	'parenttransactionreference',
+	'paymenttypedescription',
+	'requesttypedescription',
+	'securityresponseaddress',
+	'securityresponsepostcode',
+	'securityresponsesecuritycode',
+	'settlestatus',
+	'status',
+	'transactionreference',
+	// custom fields:
+	'errormessage',
+	'order_increment_ids',
+	'send_confirmation',
+	'fraudcontrolshieldstatuscode',
+	'customer_id',
+	'savecc',
+        'using_new_strs',
+      ),
+      'stextraurlredirectfields'  => array(
+        'using_new_strs',
+	'order_increment_ids',
+	'errorcode',
+	'paymenttypedescription',
+      ),
+      // End
     );
+    
+    if ($this->getConfigData('ppg_version') === '1') {
+      $data += array(
+        'parentcss'     		=> $this->getConfigData('parent_css'),
+	'childcss'      		=> $this->getConfigData('child_css'),
+	'parentjs'      		=> $this->getConfigData('parent_js'),
+	'childjs'       		=> $this->getConfigData('child_js'),
+      );
+    }
+    else {
+      $stProfile = $this->getConfigData('st_profile');
+      $data += array('stprofile' => $stProfile);
+    }
+
+    if ($this->getConfigData('ppg_version') === '2' && $this->getConfigData('skip_choice_page') && $this->getConfigData('show_paymenttype_on_magento')) {
+      $data['paymenttypedescription'] =  $payment->getCcType();
+    }
+    
+    $data['ruleidentifiers'][] = 'STR-6';
+
+    if ($this->_isMoto) {
+      $data['successfulurlredirect'] = Mage::getModel('adminhtml/url')->getUrl('adminhtml/sales_order_create_securetrading/redirect');
+    }
+    else {
+      $data['successfulurlredirect'] = Mage::getModel('core/url')
+	->setStore($payment->getOrder()->getStore())
+	->getUrl('securetrading/redirect/redirect')
+      ;
+    }
+    
+    /*
+    if ($this->getConfigData('enable_declined_redirect')) {
+    //TODO - put back in when stpp #3945 fixed.
+      $data['ruleidentifiers'][] = 'STR-7';
+      $path = Mage::helper('securetrading_stpp')->isMultishippingCheckout() ? 'checkout/multishipping/billing' : 'checkout/cart';
+      $data['declinedurlredirect'] = Mage::getModel('core/url')->setStore($payment->getOrder()->getStore())->getUrl($path);
+    }
+    */    
+    
+    $data['ruleidentifiers'][] = 'STR-10';
+    //TODO - In the next release remove the 'using_new_strs' logic since this release we will alert merchants to disable their current manual notifs/redirs.
+    $data['allurlnotification'] = Mage::getModel('core/url')->getUrl('securetrading/redirect/notification');
+
+    if ($this->getConfigData('ppg_use_iframe')) {
+      $data['stdefaultprofile'] = 'st_iframe_cardonly';
+    }
+
     return $data;
   }
   
   public function assignData($data) {
+    $payment = $this->getInfoInstance();
+    $payment->setCcType($data->getSecuretradingStppPaymentType());
     Mage::getSingleton('securetrading_stpp/payment_redirect_session')->setSaveCardDetails($data->getSecuretradingStppRedirectSaveCc());
     return $this;
   }
@@ -86,11 +194,13 @@ class Securetrading_Stpp_Model_Payment_Redirect extends Securetrading_Stpp_Model
   public function capture(Varien_Object $payment, $amount) {
     return $this->_captureAuthorized($payment, $amount);
   }
-  
+
   public function prepareData($isMoto = false, array $orderIncrementIds = array(), $sendEmailConfirmation = true) {
     $this->log(sprintf('In %s.', __METHOD__));
+    $bypassChoicePage = $this->getConfigData('ppg_version') === '2' && $this->getConfigData('skip_choice_page');
+    $this->_isMoto = $isMoto;
     $data = $this->prepareOrderData($this->getInfoInstance(), $orderIncrementIds, $sendEmailConfirmation);
-    $transport = $this->getIntegration()->runPaymentPages($data, $isMoto);
+    $transport = $this->getIntegration()->runPaymentPages($data, $bypassChoicePage, $isMoto);
     return $transport;
   }
   
@@ -161,7 +271,7 @@ class Securetrading_Stpp_Model_Payment_Redirect extends Securetrading_Stpp_Model
   
   public function orderIsSuccessful($orderIncrementId) {
     $order = Mage::getModel('sales/order')->loadByIncrementId($orderIncrementId);
-    $successful = (bool) $this->_isProcessingOrPaymentReviewState($order) || $this->_isPendingSofortStatus($order);
+    $successful = (bool) $this->_isProcessingOrPaymentReviewState($order) || $this->_isPendingSofortStatus($order) || $this->_isVirtualOrderAndComplete($order);
     return $successful;
   }
 
@@ -175,6 +285,10 @@ class Securetrading_Stpp_Model_Payment_Redirect extends Securetrading_Stpp_Model
 
   protected function _isPendingSofortStatus(Mage_Sales_Model_Order $order) {
     return (bool) ($order->getState() === Mage_Sales_Model_Order::STATE_PENDING_PAYMENT) && ($order->getStatus() === Securetrading_Stpp_Model_Payment_Abstract::STATUS_PENDING_SOFORT);
+  }
+
+  protected function _isVirtualOrderAndComplete(Mage_Sales_Model_Order $order) {
+    return (bool) $order->getIsVirtual() && $order->getState() === Mage_Sales_Model_Order::STATE_COMPLETE;
   }
 
   protected function _canTakeOrderToPpages($order) {
@@ -199,7 +313,7 @@ class Securetrading_Stpp_Model_Payment_Redirect extends Securetrading_Stpp_Model
 	$order->save(); // Must save before sendNewOrderEmail() since that calls $this->load().
 	$order->sendNewOrderEmail();
 	$order->save();
-      }
+       }
       $quote = Mage::getModel('sales/quote')->loadByIdWithoutStore($order->getQuoteId());
       if ($quote->getIsActive()) {
 	$quote->setIsActive(false)->save();

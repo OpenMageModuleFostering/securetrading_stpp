@@ -11,7 +11,9 @@ class Stpp_PaymentPages_Base extends Stpp_Component_Abstract implements Stpp_Pay
     
     const PPAGES_MOTO_DETAILS_URL = 'https://payments.securetrading.net/login/payments/details';
     
-    const PPAGES_VERSION = 1;
+    const VERSION_1 = 1;
+
+    const VERSION_2 = 2;
     
     protected $_actionInstance;
     
@@ -30,17 +32,27 @@ class Stpp_PaymentPages_Base extends Stpp_Component_Abstract implements Stpp_Pay
     protected $_siteSecurityPassword = '';
     
     protected $_siteSecurityHashAlgorithm = 'sha256';
-    
+
     protected $_siteSecurityHashFields = array(
-        'currencyiso3a',
-        'mainamount',
-        'sitereference',
-        'settlestatus',
-        'settleduedate',
-        'orderreference',
-        'accounttypedescription',
+      'currencyiso3a',
+      'mainamount',
+      'sitereference',
+      'settlestatus',
+      'settleduedate',
+      'authmethod',
+      'paypaladdressoverride',
+      'strequiredfields',
+      'version',
+      'stprofile',
+      //'ruleidentifier',
+      'ruleidentifiers',//TODO-gateway uses ruleidentifier
+      'stdefaultprofile',
+      'successfulurlredirect',
+      'declinedurlredirect',
+      'successfulurlnotification',
+      'declinedurlnotification',
     );
-    
+
     protected $_useNotificationHash = true;
     
     protected $_notificationPassword = '';
@@ -108,6 +120,10 @@ class Stpp_PaymentPages_Base extends Stpp_Component_Abstract implements Stpp_Pay
         $this->_siteSecurityPassword = $password;
     }
     
+    public function overrideDefaultSiteSecurityFields(array $fields) {// intended to be called before setSiteSecurityFields().
+      $this->_siteSecurityHashFields = $fields;
+    }
+
     public function setSiteSecurityFields($fields) {
         $this->_siteSecurityHashFields = array_unique(
             array_merge(
@@ -120,6 +136,7 @@ class Stpp_PaymentPages_Base extends Stpp_Component_Abstract implements Stpp_Pay
     
     public function setUseNotificationHash($bool) {
         $this->_useNotificationHash = (bool) $bool;
+	return $this;
     }
     
     public function setNotificationHashAlgorithm($notificationAlgorithm) {
@@ -129,14 +146,17 @@ class Stpp_PaymentPages_Base extends Stpp_Component_Abstract implements Stpp_Pay
     
     public function setNotificationHashPassword($password) {
         $this->_notificationPassword = $password;
+	return $this;
     }
     
     public function setBypassChoicePage($bool) {
         $this->_bypassChoicePage = (bool) $bool;
+	return $this;
     }
     
     public function setUseAuthenticatedMoto($bool) {
         $this->_useAuthenticatedMoto = (bool) $bool;
+	return $this;
     }
     
     public function run(Stpp_Data_Request $request) {
@@ -145,7 +165,6 @@ class Stpp_PaymentPages_Base extends Stpp_Component_Abstract implements Stpp_Pay
         if ($this->_useSiteSecurity) {
 	    $this->_request->set("sitesecurity", $this->_createSiteSecurityHash());
         }
-        $this->_request->set("version", self::PPAGES_VERSION);
 
         $data = $this->_request->toArray();
         $redirectUrl = $this->_usePost ? $this->_getHttpPostUrl($data) : $this->_getHttpGetUrl($data);
@@ -158,17 +177,24 @@ class Stpp_PaymentPages_Base extends Stpp_Component_Abstract implements Stpp_Pay
         ;
         return $result;
     }
-    
-    protected function _createSiteSecurityHash() {
-        $valuesToHash = array();
-        
-        foreach($this->_siteSecurityHashFields as $field) {
-	    $valuesToHash[] = $this->_request->get($field);
-        }
-        $valuesToHash[] = $this->_siteSecurityPassword;
-        return 'g' . hash($this->_siteSecurityHashAlgorithm, implode('', $valuesToHash));
+
+  protected function _createSiteSecurityHash() {
+    $valuesToHash = array();
+    foreach($this->_siteSecurityHashFields as $field) {
+      $value = $this->_request->get($field);
+      if (is_array($value)) {
+	foreach($value as $value2) {
+	  $valuesToHash[] = $value2;
+	}
+      }
+      else {
+	$valuesToHash[] = $value;
+      }
     }
-    
+    $valuesToHash[] = $this->_siteSecurityPassword;
+    return 'g' . hash($this->_siteSecurityHashAlgorithm, implode('', $valuesToHash));
+  }
+
     protected function _getHttpPostUrl() {
        return $this->_getPaymentPagesUrl();
     }
@@ -221,7 +247,7 @@ class Stpp_PaymentPages_Base extends Stpp_Component_Abstract implements Stpp_Pay
         if (!isset($_POST['requesttypedescription'])) {
            throw new Stpp_Exception($this->__('The requesttypedescription has not been posted to the notification.'));
         }
-
+	
         $response = $this->_mapResponse();
         
         $this->_getActionInstance()->validateNotification($response);
@@ -258,11 +284,14 @@ class Stpp_PaymentPages_Base extends Stpp_Component_Abstract implements Stpp_Pay
             case Stpp_Types::API_ACCOUNTCHECK:
                 $this->_getActionInstance()->processAccountCheck($response);
                 break;
+		/* // TODO - quick solution to prevent TRANSACTIONUPDATE notifications from being processed by the Magento module.  this should not go into the proper framework release.
             case Stpp_Types::API_TRANSACTIONUPDATE:
                 $this->_getActionInstance()->processTransactionUpdate($response);
                 break;
+		*/
             default:
-                throw new Stpp_Exception(sprintf($this->__('An unhandled responsetype has been provided: "%s".'), $_POST['requesttypedescription']));
+	      return;
+	      //throw new Stpp_Exception(sprintf($this->__('An unhandled responsetype has been provided: "%s".'), $_POST['requesttypedescription'])); // so http 200 returned - TODO - this was for magento module only.
         }
         
         $this->_getActionInstance()->saveNotificationReference($_POST['notificationreference']);
@@ -273,20 +302,20 @@ class Stpp_PaymentPages_Base extends Stpp_Component_Abstract implements Stpp_Pay
     	unset($fields['responsesitesecurity'], $fields['notificationreference']);
     	ksort($fields);
     	array_push($fields, array($password));
-    	
+	
     	$str = '';
     	foreach($fields as $k => $vArray) {
     		$str .= implode('', $vArray);
     	}
     	return hash($hashAlgorithm, $str);
     }
-    
+
     protected function _createNotificationHash() {
-    	return $this->_createResponseSiteSecurityHash($this->_getHttpHelper()->retrievePostParams(), $this->_notificationHashAlgorithm, $this->_notificationPassword);
+      return $this->_createResponseSiteSecurityHash($this->_getHttpHelper()->retrievePostParams(), $this->_notificationHashAlgorithm, $this->_notificationPassword);
     }
     
     protected function _createRedirectHash() {
-    	return $this->_createResponseSiteSecurityHash($this->_getHttpHelper()->retrieveGetParams(), $this->_siteSecurityHashAlgorithm, $this->_siteSecurityPassword);
+      return $this->_createResponseSiteSecurityHash($this->_getHttpHelper()->retrieveGetParams(), $this->_siteSecurityHashAlgorithm, $this->_siteSecurityPassword);
     }
     
     protected function _mapResponse() {

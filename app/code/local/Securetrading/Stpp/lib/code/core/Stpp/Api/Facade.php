@@ -165,7 +165,11 @@ class Stpp_Api_Facade extends Stpp_Facade {
     	if ($this->_config->has($key . 'alias')) {
     		$webServices->setAlias($this->_config->get($key . 'alias'));
     	}
-    	
+
+	if ($this->_config->has($key . 'user_agent')) {
+	  $webServices->setUserAgent($this->_config->get($key . 'user_agent'));
+	}
+
     	return $webServices;
     }
     

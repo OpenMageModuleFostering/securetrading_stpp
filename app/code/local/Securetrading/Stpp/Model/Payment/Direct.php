@@ -9,6 +9,11 @@ class Securetrading_Stpp_Model_Payment_Direct extends Securetrading_Stpp_Model_P
   
   protected $_sessionModelType = 'securetrading_stpp/payment_direct_session';
 
+  public function canManageBillingAgreements() {
+    $tokenizationMethod = Mage::getModel('securetrading_stpp/payment_tokenization');
+    return parent::canManageBillingAgreements() && $tokenizationMethod->canSaveCards($tokenizationMethod->getSavedCardsCollection());
+  }
+
   protected function _get3dAuthData() {
     $payment = $this->getInfoInstance();
     $array = array(

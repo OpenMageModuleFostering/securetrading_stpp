@@ -1,9 +1,25 @@
 <?php $_code = $this->getMethodCode() ?>
-<fieldset class="form-list">
+<fieldset class="form-list" style="clear: both;">
     <ul id="payment_form_<?php echo $this->getMethodCode(); ?>" style="display:none">
       <li>
         <?php print $this->getDescription(); ?>
       </li>
+      <?php if ($this->getSkipChoicePage() && $this->getShowPaymentTypeMultiselect()): ?>
+        <li>
+          <label for="<?php print $_code; ?>_payment_type" class="required">
+            <?php print $this->getCardTypeLabel(); ?>
+            <em>*</em>
+          </label>
+          <div class="input-box">
+            <select name="payment[securetrading_stpp_payment_type]" id="<?php print $_code; ?>_payment_type" class="required-entry">
+              <option value=""><?php print $this->__('Please select an option...'); ?></option>
+              <?php foreach($this->getAcceptedCards() as $key => $value): ?>
+                <option value="<?php print $key; ?>"><?php print $value; ?></option>
+              <?php endforeach; ?>
+            </select>
+          </div>
+        </li>
+      <?php endif; ?>
       <?php if ($this->getUseTokenization()): ?>
         <li>
           <label class="required">

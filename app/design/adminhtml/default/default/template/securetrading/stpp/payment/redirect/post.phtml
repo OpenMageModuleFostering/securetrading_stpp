@@ -1,6 +1,20 @@
 <form action="<?php print $this->getRedirectUrl(); ?>" method="post" id="securetrading_stpp_redirect_form">
     <?php foreach($this->getRedirectData() as $k => $v): ?>
-        <input type="hidden" name="<?php print $k; ?>" value="<?php print Mage::helper('core')->escapeHtml($v); ?>" />
+        <?php if ($k == 'ruleidentifiers'): ?>
+            <?php foreach($v as $ruleIdentifier): ?>
+                <input type="hidden" name="ruleidentifier" value="<?php print Mage::helper('core')->escapeHtml($ruleIdentifier); ?>" />
+            <?php endforeach; ?>
+	<?php elseif ($k == 'stextraurlnotifyfields'): ?>
+	  <?php foreach($v as $notifyField): ?>
+            <input type="hidden" name="stextraurlnotifyfields" value="<?php print Mage::helper('core')->escapeHtml($notifyField); ?>" />
+	  <?php endforeach; ?>
+        <?php elseif ($k == 'stextraurlredirectfields'): ?>
+	  <?php foreach($v as $redirectField): ?>
+            <input type="hidden" name="stextraurlredirectfields" value="<?php print Mage::helper('core')->escapeHtml($redirectField); ?>" />
+	  <?php endforeach; ?>
+        <?php else: ?>
+            <input type="hidden" name="<?php print $k; ?>" value="<?php print Mage::helper('core')->escapeHtml($v); ?>" />
+        <?php endif; ?>
     <?php endforeach; ?>
     <input type="submit" value="Pay" />
 </form>

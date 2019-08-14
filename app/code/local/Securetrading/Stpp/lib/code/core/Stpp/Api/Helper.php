@@ -231,7 +231,7 @@ class Stpp_Api_Helper extends Stpp_Component_Abstract implements Stpp_Api_Helper
                 $accountType = Stpp_Types::ACCOUNT_FRAUDCONTROL;
                 break;
             case Stpp_Types::API_ACCOUNTCHECK:
-                $accountType = Stpp_Types::ACCOUNT_ECOM;
+                $accountType = $this->_adminAction ? Stpp_Types::ACCOUNT_MOTO : Stpp_Types::ACCOUNT_ECOM;
                 break;
             case Stpp_Types::API_CARDSTORE:
                 $accountType = Stpp_Types::ACCOUNT_CARDSTORE;

@@ -2,6 +2,10 @@
 
 class Securetrading_Stpp_RedirectController extends Mage_Core_Controller_Front_Action {
   public function notificationAction() {
+    if (!$this->getRequest()->getParam('using_new_strs')) {
+      throw new Exception('The latest version of the Secure Trading module does not require merchants to set up their notifications and redirects manually through MyST.  Please disable all notifications and redirects that you have set up.');
+    }
+
     Mage::getModel('securetrading_stpp/payment_redirect')
       ->log(sprintf('In %s.', __METHOD__))
       ->runNotification();
@@ -9,10 +13,14 @@ class Securetrading_Stpp_RedirectController extends Mage_Core_Controller_Front_A
   }
   
   public function redirectAction() {
+    if (!$this->getRequest()->getParam('using_new_strs')) {
+      Mage::getModel('securetrading_stpp/payment_redirect')->log('Non-STR redirect fired.');
+    }
+
     Mage::getModel('securetrading_stpp/payment_redirect')
       ->log(sprintf('In %s.', __METHOD__))
       ->runRedirect();
-    
+      
     if (Mage::getModel('securetrading_stpp/payment_redirect')->ordersAreSuccessful($this->_getOrderIncrementIds())) {
       $this->_setBillingAgreementToSession();
       Mage::getModel('securetrading_stpp/payment_redirect')->onRedirect($this->_getOrderIncrementIds(), $this->getRequest()->getParam('errorcode'), $this->getRequest()->getParam('paymenttypedescription'));

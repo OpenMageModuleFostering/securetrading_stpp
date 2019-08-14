@@ -4,6 +4,18 @@
             <?php foreach($v as $requestTypeDescription): ?>
                 <input type="hidden" name="requesttypedescriptions" value="<?php print Mage::helper('core')->escapeHtml($requestTypeDescription); ?>" />
             <?php endforeach; ?>
+        <?php elseif ($k == 'ruleidentifiers'): ?>
+            <?php foreach($v as $ruleIdentifier): ?>
+                <input type="hidden" name="ruleidentifier" value="<?php print Mage::helper('core')->escapeHtml($ruleIdentifier); ?>" />
+            <?php endforeach; ?>
+	<?php elseif ($k == 'stextraurlnotifyfields'): ?>
+	  <?php foreach($v as $notifyField): ?>
+            <input type="hidden" name="stextraurlnotifyfields" value="<?php print Mage::helper('core')->escapeHtml($notifyField); ?>" />
+	  <?php endforeach; ?>
+        <?php elseif ($k == 'stextraurlredirectfields'): ?>
+	  <?php foreach($v as $redirectField): ?>
+            <input type="hidden" name="stextraurlredirectfields" value="<?php print Mage::helper('core')->escapeHtml($redirectField); ?>" />
+	  <?php endforeach; ?>
         <?php else: ?>
             <input type="hidden" name="<?php print $k; ?>" value="<?php print Mage::helper('core')->escapeHtml($v); ?>" />
         <?php endif; ?>
@@ -12,7 +24,7 @@
 </form>
 <script type="text/javascript">
     document.body.onload = function() { 
-        document.getElementById("securetrading_stpp_redirect_form").submit();
+   document.getElementById("securetrading_stpp_redirect_form").submit();
     };
 </script>
 <noscript>

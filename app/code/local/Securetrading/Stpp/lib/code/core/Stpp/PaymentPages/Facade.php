@@ -24,6 +24,12 @@ class Stpp_PaymentPages_Facade extends Stpp_Facade {
             $ppages->setSiteSecurityPassword($this->_config->get('interfaces/ppages/sitesecurity/password'));
         }
 
+	##
+	if ($this->_config->has('interfaces/ppages/sitesecurity/default_field_override')) {
+	    $ppages->overrideDefaultSiteSecurityFields($this->_config->get('interfaces/ppages/sitesecurity/default_field_override'));
+	}
+	##
+
         if ($this->_config->has('interfaces/ppages/sitesecurity/fields')) {
             $ppages->setSiteSecurityFields($this->_config->get('interfaces/ppages/sitesecurity/fields'));
         }
@@ -62,9 +68,9 @@ class Stpp_PaymentPages_Facade extends Stpp_Facade {
     	return new Stpp_Http_Helper();
     }
     
-    public function runPaymentPagesStandard(Stpp_Data_Request $request, $adminAction = false) {
+    public function runPaymentPagesStandard(Stpp_Data_Request $request, $bypassChoicePage = false, $adminAction = false) {
         $request = $this->newPaymentPagesHelper()->setAdminAction($adminAction)->prepareStandard($request);
-        $result = $this->newPaymentPages()->run($request);
+        $result = $this->newPaymentPages()->setBypassChoicePage($bypassChoicePage)->run($request);
         return $result;
     }
 }

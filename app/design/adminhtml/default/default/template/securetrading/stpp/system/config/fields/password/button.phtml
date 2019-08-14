@@ -1,0 +1,22 @@
+<script type="text/javascript">
+ function doIt(element, confirmText) {
+   var rv = confirm(confirmText);
+   if (rv) {
+     new Ajax.Request('<?php print $this->getButtonUrl(); ?>', {
+       onSuccess : function(response) {
+	 document.getElementById(element.getAttribute('data-updates')).value = response.responseText;
+       }
+     });
+   }
+ }
+</script>
+
+<div class="pp-buttons-container">
+   <button onclick="javascript: doIt(this, '<?php print $this->getConfirmText(); ?>');" class="scalable" type="button" id="<?php print $this->getHtmlId(); ?>" data-updates="<?php print $this->getButtonUpdates(); ?>">
+     <span>
+       <span>
+         <span><?php print $this->escapeHtml($this->getButtonLabel()); ?></span>
+       </span>
+     </span>
+   </button>
+</div>

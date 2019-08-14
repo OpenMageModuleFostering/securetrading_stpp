@@ -21,20 +21,32 @@ class Securetrading_Stpp_Block_Adminhtml_System_Config_Fieldset_Fields
     }
 
     protected function _getHeaderTitleHtml($element) {
-        return '
+      $groupConfig = $this->getGroup($element);
+      if ($groupConfig->use_large_fieldset) {
+	$headerComment = (string) $groupConfig->header_comment;
+	if (isset($groupConfig->help_urls)) {
+	  $helpLink = '';
+	  foreach($groupConfig->help_urls->children() as $url) {Mage::log($url);
+	    $helpLink .= '<a target="_blank" href="' . $url->url . '">' . $url->text . '</a>';
+	  }
+	}
+	else {
+	  $helpLink = '';
+	}
+        $return = '
             <div class="config-heading" >
                  <span style="display: inline-block; width: 16px; float: left; position: relative; left: -6px; top: 8px;">
                      <img src="' .  $this->getSkinUrl('images/securetrading/stpp/success_16_16.png') . '" style="' . ($this->_isPaymentEnabled($element) ? '' : 'visibility: hidden;') . '" />
                  </span>
-                 <span style="display: inline-block; width: 120px; float: left;">' .
+                 <span style="display: inline-block; width: 120px; float: left; padding-top: 10px;">' .
           			(($filename = (string) $element->getGroup()->image_logo) ? '<img src="' . $this->getSkinUrl('images/securetrading/stpp/' . $filename) . '" />' : '') . '
                  </span>
 
                 <div class="heading">
-                    <strong>' . $element->getLegend() . '</strong>
-                    <span class="heading-intro">' . $element->getComment() . '</span>
+                    <strong>' . $element->getLegend() . '</strong>' . $helpLink . '
+                    <span class="heading-intro">' . $headerComment . '</span>
                 </div>
-                <div class="button-container">
+                <div class="button-container" style="line-height: 50px;" >
                     <button
                         type="button"
                         class="button"
@@ -47,12 +59,13 @@ class Securetrading_Stpp_Block_Adminhtml_System_Config_Fieldset_Fields
                 </div>
             </div>
         ';
+      }
+      else {
+	$return = parent::_getHeaderTitleHtml($element);
+      }
+      return $return;
     }
-    
-    protected function _getHeaderCommentHtml($element) {
-        return '';
-    }
-    
+        
     public function render(Varien_Data_Form_Element_Abstract $element) {
         $fields = Mage::getModel('securetrading_stpp/integration')->getAdminFields();
         $matches = null;
@@ -88,14 +101,6 @@ class Securetrading_Stpp_Block_Adminhtml_System_Config_Fieldset_Fields
                         $label = $fields->getLabel(Stpp_Fields_Admin::FIELD_PPG_SITE_SECURITY_PASSWORD);
                         $tooltip = $fields->getDescription(Stpp_Fields_Admin::FIELD_PPG_SITE_SECURITY_PASSWORD);
                         break;
-                    case 'use_notification_password':
-                        $label = $fields->getLabel(Stpp_Fields_Admin::FIELD_PPG_USE_NOTIFICATION_HASH);
-                        $tooltip = $fields->getDescription(Stpp_Fields_Admin::FIELD_PPG_USE_NOTIFICATION_HASH);
-                        break;
-                    case 'notification_password':
-                        $label = $fields->getLabel(Stpp_Fields_Admin::FIELD_PPG_NOTIFICATION_HASH_PASSWORD);
-                        $tooltip = $fields->getDescription(Stpp_Fields_Admin::FIELD_PPG_NOTIFICATION_HASH_PASSWORD);
-                        break;
                     case 'parent_css':
                         $label = $fields->getLabel(Stpp_Fields_Admin::FIELD_PPG_PARENT_CSS);
                         $tooltip = $fields->getDescription(Stpp_Fields_Admin::FIELD_PPG_PARENT_CSS);
@@ -112,9 +117,17 @@ class Securetrading_Stpp_Block_Adminhtml_System_Config_Fieldset_Fields
                         $label = $fields->getLabel(Stpp_Fields_Admin::FIELD_PPG_CHILD_JS);
                         $tooltip = $fields->getDescription(Stpp_Fields_Admin::FIELD_PPG_CHILD_JS);
                         break;
-                    case 'sub_site_reference':
-                        $label = $fields->getLabel(Stpp_Fields_Admin::FIELD_PPG_SUB_SITE_REFERENCE);
-                        $tooltip = $fields->getDescription(Stpp_Fields_Admin::FIELD_PPG_SUB_SITE_REFERENCE);
+                    case 'st_profile':
+                        $label = $fields->getLabel(Stpp_Fields_Admin::FIELD_PPG_ST_PROFILE);
+                        $tooltip = $fields->getDescription(Stpp_Fields_Admin::FIELD_PPG_ST_PROFILE);
+                        break;
+                    case 'ppg_version':
+                        $label = $fields->getLabel(Stpp_Fields_Admin::FIELD_PPG_VERSION);
+			$tooltip = null;
+                        break;
+		    case 'skip_choice_page':
+		       $label = $fields->getLabel(Stpp_Fields_Admin::FIELD_PPG_SKIP_CHOICE_PAGE);
+                        $tooltip = $fields->getDescription(Stpp_Fields_Admin::FIELD_PPG_SKIP_CHOICE_PAGE);
                         break;
                     case 'use_api':
                         $label = $fields->getLabel(Stpp_Fields_Admin::FIELD_PPG_USE_API);
@@ -266,6 +279,13 @@ class Securetrading_Stpp_Block_Adminhtml_System_Config_Fieldset_Fields
 		    case 'config_fallback':
 		      $label = $this->__('Config Inheritance');
 		      $tooltip = $this->__('Defines which payment method to inherit certain configuration values from.');
+		      break;
+		    case 'enable_declined_redirect':
+		      $label = $this->__('Enable Declined Redirects');
+		      $tooltip = $this->__('Enable this if would like your customers to be redirected to your checkout when their card is declined.  The default behavior is for them to remain on the Payment Pages.');
+		    case 'show_paymenttype_on_magento':
+		      $label = $this->__('Show Accepted Cards Multi-select');
+		      $tooltip = $this->__('Enable this to show the list of Accepted Cards in the payment method section of the checkout.  If disabled the payment type will automatically be determined using the customers\' PAN.');
 		      break;
                     default:
                         $label = $e->getLabel();

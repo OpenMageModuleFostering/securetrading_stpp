@@ -108,28 +108,33 @@ class Securetrading_Stpp_Model_Cron {
     $collection = Mage::getModel('sales/order')->getCollection();
     $collection->addFieldToFilter('status', array('eq' => Securetrading_Stpp_Model_Payment_Abstract::STATUS_PROCESSING_SOFORT));
     $collection->addFieldToSelect('increment_id');
+    
     $orderIncrementIds = array();
     foreach($collection as $order) {
       $orderIncrementIds[] = $order->getIncrementId();
     }
 
-    $startDate = date('Y-m-d', strtotime('-30 day'));//TODO - the crons have arbitrary limits on start dates.  E.g. merchant runs module for year, doesn't configure cron.  then sets it up.  not all transactions will be retrieved and updated.  two potential solutions: allow cron to be manually fired from admin area with no limits, or make start dates configurable.
-    $endDate = date('Y-m-d');
-    
-    $models = array(Mage::getModel('securetrading_stpp/payment_redirect'));
-    $filters = array('orderreferences' => $orderIncrementIds);
-    $additionalFields = array('orderreference', 'settlestatus');
-    $csvData = Mage::helper('securetrading_stpp')->getCsvData($models, $filters, $additionalFields, $startDate, $endDate);
-
-    // take order to SOFORT auth page - it is now pending sofort.  if decline - customer can try again.  new ST transaction made for each try.  all one order id.  so multiple transactionreferences - some cancelled, one may be settled - for each order increment id.  handle this case - if there is a 100 then the order was a success.
     $finalCsvData = array();
-    foreach($csvData as $row) {
-      $orderIncrementId = $row[1];
-      if (array_key_exists($orderIncrementId, $finalCsvData) && $finalCsvData[$orderIncrementId][2] === '100') { // If a transaction already exists for this order increement ID and is settlestatus 100, continue so that the transaction isn't set back to a 3 again (if a 3 also exists)
-	continue;
+
+    if (!empty($orderIncrementIds)) {
+      $startDate = date('Y-m-d', strtotime('-30 day'));//TODO - the crons have arbitrary limits on start dates.  E.g. merchant runs module for year, doesn't configure cron.  then sets it up.  not all transactions will be retrieved and updated.  two potential solutions: allow cron to be manually fired from admin area with no limits, or make start dates configurable.
+      $endDate = date('Y-m-d');
+
+      $models = array(Mage::getModel('securetrading_stpp/payment_redirect'));
+      $filters = array('orderreferences' => $orderIncrementIds);
+      $additionalFields = array('orderreference', 'settlestatus');
+      $csvData = Mage::helper('securetrading_stpp')->getCsvData($models, $filters, $additionalFields, $startDate, $endDate);
+
+      // take order to SOFORT auth page - it is now pending sofort.  if decline - customer can try again.  new ST transaction made for each try.  all one order id.  so multiple transactionreferences - some cancelled, one may be settled - for each order increment id.  handle this case - if there is a 100 then the order was a success.
+      foreach($csvData as $row) {
+	$orderIncrementId = $row[1];
+	if (array_key_exists($orderIncrementId, $finalCsvData) && $finalCsvData[$orderIncrementId][2] === '100') { // If a transaction already exists for this order increement ID and is settlestatus 100, continue so that the transaction isn't set back to a 3 again (if a 3 also exists)
+	  continue;
+	}
+	$finalCsvData[$orderIncrementId] = $row;
       }
-      $finalCsvData[$orderIncrementId] = $row;
     }
+
     return $finalCsvData;
   }
 

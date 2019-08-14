@@ -22,6 +22,13 @@ abstract class Securetrading_Stpp_Model_Payment_Abstract extends Mage_Payment_Mo
     return true;
   }
 
+  public static function getVersionInformation() {
+    $stppVersion = (string) Mage::getConfig()->getModuleConfig('Securetrading_Stpp')->version;
+    $multishippingVersion = (string) Mage::getConfig()->getModuleConfig('Securetrading_Multishipping')->version;
+    $str = sprintf('Magento %s %s (Securetrading_Stpp-%s Securetrading_Multishipping-%s)', Mage::getEdition(), Mage::getVersion(), $stppVersion, $multishippingVersion);
+    return $str;
+  }
+
   public function getIntegration() {
     return Mage::getModel('securetrading_stpp/integration', array('payment_method' => $this));
   }
@@ -103,7 +110,7 @@ abstract class Securetrading_Stpp_Model_Payment_Abstract extends Mage_Payment_Mo
       'orderreference'            => $order->getIncrementId(),
 
       'customfield4'             => $this->_getCartInformation(),
-      'customfield5'             => $this->_getVersionInformation(),
+      'customfield5'             => self::getVersionInformation(),
 		  );
         
     if ($order->getShippingMethod()) {
@@ -134,12 +141,5 @@ abstract class Securetrading_Stpp_Model_Payment_Abstract extends Mage_Payment_Mo
 
   protected function _getCartInformation() {
     return 'MAGENTO';
-  }
-
-  protected function _getVersionInformation() {
-    $stppVersion = (string) Mage::getConfig()->getModuleConfig('Securetrading_Stpp')->version;
-    $multishippingVersion = (string) Mage::getConfig()->getModuleConfig('Securetrading_Multishipping')->version;
-    $str = sprintf('Magento %s %s (Securetrading_Stpp-%s Securetrading_Multishipping-%s)', Mage::getEdition(), Mage::getVersion(), $stppVersion, $multishippingVersion);
-    return $str;
   }
 }

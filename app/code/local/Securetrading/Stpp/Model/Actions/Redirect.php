@@ -51,6 +51,7 @@ class Securetrading_Stpp_Model_Actions_Redirect extends Securetrading_Stpp_Model
       if ($this->_paymentIsSuccessful($response) && $response->get('savecc')) {
 	$this->_createBillingAgreement($response);
       }
+      
       return $this->_isErrorCodeZero($response);
     }
 
@@ -142,10 +143,10 @@ class Securetrading_Stpp_Model_Actions_Redirect extends Securetrading_Stpp_Model
     protected function _updateOrder(Stpp_Data_Response $response, $firstOrder) {
     	$order = $this->_getOrder($response);
     	if ($firstOrder) {
-    		$addresses = array(
-    				'billing' => $order->getBillingAddress(),
-    				'customer' => $order->getShippingAddress(),
-    		);
+	  $addresses = array('billing' => $order->getBillingAddress());
+	  if ($order->getShippingAddress()) {
+	    $addresses['customer'] = $order->getShippingAddress();
+	  }
     	}
     	else {
     		$addresses = array('billing' => $order->getBillingAddress());

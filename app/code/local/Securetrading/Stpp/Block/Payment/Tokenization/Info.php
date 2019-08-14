@@ -6,6 +6,11 @@ class Securetrading_Stpp_Block_Payment_Tokenization_Info extends Securetrading_S
         $this->setTemplate('securetrading/stpp/payment/tokenization/info.phtml');
     }
 
+    public function toPdf() {
+      $this->setTemplate('securetrading/stpp/payment/tokenization/info_pdf.phtml');
+      return $this->toHtml();
+    }
+
     public function getCardLabel() {
       $label = '';
       $activeBillingAgreement = $this->getInfo()->getMethodInstance()->getActiveBillingAgreement(true);

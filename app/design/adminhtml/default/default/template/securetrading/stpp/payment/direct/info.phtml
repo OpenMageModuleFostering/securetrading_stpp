@@ -1,8 +1,8 @@
 <b><?php print $this->getTitle(); ?></b>
 <br /><br />
 <ul>
-	<?php if ($this->getAccountTypeDescription()): ?>
-    	<li>Account Type Description: <?php print $this->getAccountTypeDescription(); ?></li>
+    <?php if ($this->getAccountTypeDescription()): ?>
+    <li>Account Type Description: <?php print $this->getAccountTypeDescription(); ?></li>
     <?php endif; ?>
     <?php if ($this->getTransactionReference()): ?>
     <li>Transaction Reference: <a href="<?php print $this->getTransactionReferenceUrl(); ?>"><?php print $this->getTransactionReference(); ?></a></li>
@@ -15,9 +15,9 @@
     <?php endif; ?>
     <?php if ($this->getSecurityCode()): ?>
     <li>Security Response Security Code: <span style="<?php print $this->getSecurityCodeStyle(); ?>"><?php print $this->getSecurityCode(); ?></span></li>
-	<?php endif; ?>
-	<?php if ($this->getFraudControlShieldStatusCode()): ?>
-	<li>Fraud Control Shield Status Code: <span style="<?php print $this->getFraudControlShieldStatusCodeStyle(); ?>"><?php print $this->getFraudControlShieldStatusCode(); ?></span></li>
+    <?php endif; ?>
+    <?php if ($this->getFraudControlShieldStatusCode()): ?>
+    <li>Fraud Control Shield Status Code: <span style="<?php print $this->getFraudControlShieldStatusCodeStyle(); ?>"><?php print $this->getFraudControlShieldStatusCode(); ?></span></li>
     <?php endif; ?>
     <?php if ($this->getEnrolled()): ?>
     <li>3D Enrolled: <?php print $this->getEnrolled(); ?></li>
@@ -30,6 +30,9 @@
     <?php endif; ?>
     <?php if ($this->getCcLast4()): ?>
     <li>Last 4 Card Digits: <?php print $this->getCcLast4(); ?></li>
+    <?php endif; ?>
+    <?php if ($this->getAuthCode()): ?>
+    <li>Auth Code: <?php print $this->getAuthCode(); ?></li>
     <?php endif; ?>
 </ul>
 <?php if ($this->getTransactionReference()): ?>

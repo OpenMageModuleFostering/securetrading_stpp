@@ -18,6 +18,7 @@ abstract class Securetrading_Stpp_Block_Adminhtml_Sales_Transactions_Data_Abstra
     protected function _prepareCollection() {
         $collection = new Varien_Data_Collection();
         foreach ($this->_getGridData() as $key => $value) {
+	  $value = is_array($value) ? 'SERIALIZED FOR DISPLAY: ' . serialize($value) : $value;
             $data = new Varien_Object(array('key' => $key, 'value' => $value));
             $collection->addItem($data);
         }

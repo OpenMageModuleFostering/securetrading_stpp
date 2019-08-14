@@ -39,13 +39,14 @@ class Securetrading_Stpp_Model_Actions_Direct extends Securetrading_Stpp_Model_A
     $order = $this->_getOrder($response);
     $payment = $order->getPayment();
     $methodInstance = $payment->getMethodInstance();
-
+    
     if ($this->_authShouldEnterPaymentReview($response)) {
       if ($methodInstance->getIsMultishipping() && !$methodInstance->getIsFirstMultishipping()) {
 	$payment->setIsTransactionPending(false); ## reverse the setting to pending - so exception at bottom of mage_sales_model_order_payment::capture() isn't thrown - but it will be reset by our code in direct payment method's capture() func.
-	Mage::register('stpp_test_key', true);
+	if (!Mage::registry('stpp_test_key')) {
+	  Mage::register('stpp_test_key', true);
+	}
       }
-
     }
 
     if ($this->_paymentIsSuccessful($response) || $this->_authShouldEnterPaymentReview($response)) {
@@ -56,12 +57,12 @@ class Securetrading_Stpp_Model_Actions_Direct extends Securetrading_Stpp_Model_A
     }
     
     if ($methodInstance->getCode() === Mage::getModel('securetrading_stpp/payment_tokenization')->getCode()) {
-      $payment
-	->setCcType($response->get('paymenttypedescription'))
-	->setCcLast4($payment->getMethodInstance()->getIntegration()->getCcLast4($response->get('maskedpan')))
-	->save()
-      ;
+      $payment->setCcLast4($payment->getMethodInstance()->getIntegration()->getCcLast4($response->get('maskedpan')));
     }
+    $payment
+      ->setCcType($response->get('paymenttypedescription'))
+      ->save()
+    ;
   }
     
   public function process3dQuery(Stpp_Data_Response $response) {
@@ -69,7 +70,7 @@ class Securetrading_Stpp_Model_Actions_Direct extends Securetrading_Stpp_Model_A
       $this->setOrder($order);
       parent::process3dQuery($response);
     }
-    return $this->_isErrorCodeZero($response);
+    return $this->_isErrorCodeZero($response) || $response->get('errorcode') === '60031' || $response->get('errorcode') === '60032';
   }
     
   public function processRiskDecision(Stpp_Data_Response $response) {

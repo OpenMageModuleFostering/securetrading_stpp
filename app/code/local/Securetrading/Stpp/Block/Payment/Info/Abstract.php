@@ -74,6 +74,10 @@ abstract class Securetrading_Stpp_Block_Payment_Info_Abstract extends Mage_Payme
     public function getTransactionReference() {
         return $this->getSpecific('transaction_reference');
     }
+
+    public function getAuthCode() {
+        return $this->getSpecific('authcode');
+    }
     
     public function getTransactionReferenceUrl() {
         $transaction = Mage::getModel('securetrading_stpp/transaction')->load($this->getTransactionReference(), 'transaction_reference');

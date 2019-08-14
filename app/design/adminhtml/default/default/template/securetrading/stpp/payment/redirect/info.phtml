@@ -31,6 +31,9 @@
     <?php if ($this->getCcLast4()): ?>
     <li>Last 4 Card Digits: <?php print $this->getCcLast4(); ?></li>
     <?php endif; ?>
+    <?php if ($this->getAuthCode()): ?>
+    <li>Auth Code: <?php print $this->getAuthCode(); ?></li>
+    <?php endif; ?>
 </ul>
 <?php if ($this->getTransactionReference()): ?>
 	<a href="<?php print $this->getMystUrl(); ?>" target="_blank">View in MyST</a>

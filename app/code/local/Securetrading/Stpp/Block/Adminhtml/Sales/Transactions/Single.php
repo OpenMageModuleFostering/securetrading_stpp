@@ -61,7 +61,7 @@ class Securetrading_Stpp_Block_Adminhtml_Sales_Transactions_Single extends Mage_
     }
     
     public function replaceIfXReference($transactionReferenceOrXReference) {
-      if (substr($transactionReferenceOrXReference, 0, 1) === 'X') {
+      if (substr($transactionReferenceOrXReference, 0, 1) === 'W') {
 	$filters = $this->getTransaction()->getRequestData('filter');
 	$return = $filters['transactionreference'];
       }

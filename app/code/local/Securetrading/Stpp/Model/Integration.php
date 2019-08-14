@@ -20,7 +20,7 @@ class Securetrading_Stpp_Model_Integration extends Mage_Core_Model_Abstract {
   public function _construct() {
     require_once(Mage::getModuleDir('', 'Securetrading_Stpp') . DS . 'lib' . DS . 'Securetrading.php');
     Securetrading::init();
-        
+
     $config = array();
     $paymentMethod = $this->getPaymentMethod();
     
@@ -28,59 +28,65 @@ class Securetrading_Stpp_Model_Integration extends Mage_Core_Model_Abstract {
       $this->_ppagesActionInstance = Mage::getModel('securetrading_stpp/actions_redirect');
       $this->_apiActionInstance = Mage::getModel('securetrading_stpp/actions_direct');
             
+      $siteSecurity = $paymentMethod->getConfigData('site_security_password');
+      $notificationHash = $paymentMethod->getConfigData('notification_password');
+
+      $useNotificationHash = (bool) is_string($siteSecurity) && !empty($siteSecurity);
+      $notificationHash = $siteSecurity;
+
       $config = array(
 	'connections' => array(
 	  'web_services' => array(
 	    'username'                          => $paymentMethod->getConfigData('ws_username'),
 	    'password'                          => $paymentMethod->getConfigData('ws_password'),
-	    'alias'                             => $paymentMethod->getConfigData('ws_alias'),
+	    'alias'                             => $paymentMethod->getConfigData('ws_username'),
 	    'ssl_verify_peer'                   => $paymentMethod->getConfigData('ws_verify_ca'),
 	    'ssl_verify_host'=> 2,
 	    'ssl_cacertfile'                    => $paymentMethod->getConfigData('ws_ca_file'),
+	    'user_agent'                        => Securetrading_Stpp_Model_Payment_Abstract::getVersionInformation(),
 				  ),
-	  'api' => array(
-	    'host'                              => $paymentMethod->getConfigData('stapi_host'),
-	    'port'                              => $paymentMethod->getConfigData('stapi_port'),
-	    'alias'=> $paymentMethod->getConfigData('stapi_alias'),
-			 ),
 			       ),
 	'interfaces' => array(
 	  'ppages' => array(
 	    'action_instance'                   => $this->_ppagesActionInstance,
 	    'notificationhash' => array(
-	      'password'                      => $paymentMethod->getConfigData('notification_password'),
+	      'password'                      => $notificationHash,
 	      'algorithm'                     => 'sha256',
-	      'use'                           => $paymentMethod->getConfigData('use_notification_password'),
+	      'use'                           => $useNotificationHash,
 					),
 	    'sitesecurity' => array(
 	      'password'                      => $paymentMethod->getConfigData('site_security_password'),
 	      'algorithm'                     => 'sha256',
-	      'use'                           => $paymentMethod->getConfigData('use_site_security'),
-	      'fields'=> array('order_increment_ids'),
+	      'use'                           => is_string($siteSecurity) && !empty($siteSecurity),
 				    ),
 	    'use_authenticated_moto'            => false,
 	    'use_http_post'                     => true,
 			    ),
 	  'api' => array(
 	    'action_instance'                   => $this->_apiActionInstance,
-	    'active_connection'                 => $paymentMethod->getConfigData('connection'),
+	    'active_connection'                 => Stpp_Api_Connection_Webservices::getKey(),
 	    'use_3d_secure'                     => $paymentMethod->getConfigData('use_3d_secure'),
 	    'use_risk_decision'                 => $paymentMethod->getConfigData('use_risk_decision'),
 	    'use_account_check'                 => $paymentMethod->getConfigData('use_account_check'),
 	    'use_card_store'                    => $paymentMethod->getConfigData('use_card_store'),
-	    //'use_risk_decision_after_auth'      => $paymentMethod->getConfigData('delay_risk_decision'),
-	    //'use_auto_card_store'               => $paymentMethod->getConfigData('use_auto_card_store'),
 			 )
 			      ),
 	'transactionsearch' => array(
-	  'username'=> $paymentMethod->getConfigData('transactionsearch_username'),
-	  'password'=> $paymentMethod->getConfigData('transactionsearch_password'),
-	  'ssl_verify_peer'=> $paymentMethod->getConfigData('transactionsearch_verify_ca'),
+	  'username'=> $paymentMethod->getConfigData('ws_username'),
+	  'password'=> $paymentMethod->getConfigData('ws_password'),
+	  'ssl_verify_peer'=> $paymentMethod->getConfigData('ws_verify_ca'),
 	  'ssl_verify_host'=> 2,
-	  'ssl_cacertfile'=> $paymentMethod->getConfigData('transactionsearch_ca_file'),
-	  
+	  'ssl_cacertfile'=> $paymentMethod->getConfigData('ws_ca_file'),
 				     )
 		      );
+
+      if ($paymentMethod->getConfigData('ppg_version') === '1') {
+        $config['interfaces']['ppages']['sitesecurity']['default_field_override'] = array('currencyiso3a','mainamount','sitereference','settlestatus','settleduedate');
+	$config['interfaces']['ppages']['sitesecurity']['fields'] = array('orderreference', 'accounttypedescription', 'order_increment_ids');
+      }
+      else {
+	$config['interfaces']['ppages']['sitesecurity']['fields'] = array('orderreference', 'accounttypedescription', 'order_increment_ids', 'order_increment_id', 'allurlnotification');
+      }
     }
     
     $utilityFacade = Magento_Utility_Facade::instance($config); // Must be done before using any other parts of the STPP framework.
@@ -136,15 +142,7 @@ class Securetrading_Stpp_Model_Integration extends Mage_Core_Model_Abstract {
   public function getCardTypes() {
     return Stpp_Types::getCardTypes();
   }
-    
-  public function getConnections() {
-    $connections = array();
-    foreach($this->_apiFacade->newApiConnectionStore()->getAll() as $k => $v) {
-      $connections[$k] = $v::getName();
-    }
-    return $connections;
-  }
-    
+
   protected function _setOrderToActionInstances(Mage_Sales_Model_Order $order) {
     $this->_apiActionInstance->setOrder($order);
     $this->_ppagesActionInstance->setOrder($order);
@@ -203,9 +201,9 @@ class Securetrading_Stpp_Model_Integration extends Mage_Core_Model_Abstract {
       return $this->_apiFacade->runApiRequests($data, array(Stpp_Types::API_CARDSTORE));
     }
 
-    public function runPaymentPages(array $data, $isMoto = false) {
+    public function runPaymentPages(array $data, $bypassChoicePage = false, $isMoto = false) {
         $request = Stpp_Data_Request::instance()->setMultiple($data);
-        $result = $this->_ppagesFacade->runPaymentPagesStandard($request, $isMoto);
+        $result = $this->_ppagesFacade->runPaymentPagesStandard($request, $bypassChoicePage, $isMoto);
         Mage::getModel('securetrading_stpp/payment_redirect_request')->addRequest($this->getPaymentMethod()->getInfoInstance(), $result->getRequest());
     
         

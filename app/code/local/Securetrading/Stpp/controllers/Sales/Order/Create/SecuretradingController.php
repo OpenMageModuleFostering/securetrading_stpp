@@ -51,6 +51,10 @@ class Securetrading_Stpp_Sales_Order_Create_SecuretradingController extends Mage
     }
     
     public function redirectAction() {
+      if (!$this->getRequest()->getParam('using_new_strs')) {
+	Mage::getModel('securetrading_stpp/payment_redirect')->log('Non-STR redirect fired.');
+      }
+
         Mage::getModel('securetrading_stpp/payment_redirect')->runRedirect();
         
         $orderIncrementId = Mage::getSingleton('adminhtml/session_quote')->getLastOrderIncrementId();
@@ -62,7 +66,7 @@ class Securetrading_Stpp_Sales_Order_Create_SecuretradingController extends Mage
         Mage::getSingleton('adminhtml/session')->clear();
         
         if (Mage::getModel('securetrading_stpp/payment_redirect')->orderIsSuccessful($orderIncrementId)) {
-	        Mage::getModel('securetrading_stpp/payment_redirect')->onRedirect(array($orderIncrementId), $this->getRequest()->getParam('errorcode'), $this->getRequest()->getParam('paymenttypedescription'));
+	  //Mage::getModel('securetrading_stpp/payment_redirect')->onRedirect(array($orderIncrementId), $this->getRequest()->getParam('errorcode'), $this->getRequest()->getParam('paymenttypedescription'));//onRedirect() only has SOFORT logic currently so should not be required on MOTO redirect.
         	Mage::getSingleton('adminhtml/session')->addSuccess($this->__('The order has been created.'));
         }
         else {

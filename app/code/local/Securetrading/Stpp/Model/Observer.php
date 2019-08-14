@@ -55,9 +55,10 @@ class Securetrading_Stpp_Model_Observer {
             'security_address',
             'security_postcode',
             'security_code',
-			'shield_status_code',
+	    'shield_status_code',
             'enrolled',
             'status',
+            'authcode',
         );
         
         $payment = $observer->getEvent()->getPayment();

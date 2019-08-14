@@ -155,6 +155,20 @@ class Securetrading_Stpp_Helper_Data extends Mage_Core_Helper_Abstract {
     $order->save();
   }
 
+  public function getRandomBytes($nbBytes = 32) {
+    $bytes = openssl_random_pseudo_bytes($nbBytes, $strong);
+    if (false !== $bytes && true === $strong) {
+      return $bytes;
+    }
+    else {
+      throw new Exception("Unable to generate secure token from OpenSSL.");
+    }
+  }
+
+  public function generatePassword($length = 16){
+    return substr(preg_replace("/[^a-zA-Z0-9]/", "", base64_encode($this->getRandomBytes($length+1))),0,$length);
+  }
+
   public function mask($string) {
     $toMask = substr($string, 0, -4);
     $masked = str_repeat('#', strlen($toMask));

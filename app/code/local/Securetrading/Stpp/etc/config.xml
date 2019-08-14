@@ -3,7 +3,7 @@
 <config>
     <modules>
         <Securetrading_Stpp>
-            <version>3.5.2</version>
+            <version>3.6.0</version>
         </Securetrading_Stpp>
     </modules>
     
@@ -39,6 +39,8 @@
             <securetrading_direct_return>/securetrading/direct/return</securetrading_direct_return>
             <securetrading_payment_location>/securetrading/payment/location</securetrading_payment_location>
 	    <securetrading_tokenization>/securetrading/tokenization</securetrading_tokenization>
+	    <securetrading_redirect>/securetrading/redirect/redirect</securetrading_redirect>
+	    <securetrading_notification>/securetrading/redirect/notification</securetrading_notification>
         </secure_url>
     </frontend>
 
@@ -200,18 +202,13 @@
                 <use_iframe>1</use_iframe>
 		<iframe_width>100%</iframe_width>
                 <iframe_height>600px</iframe_height>
-                <stapi_alias backend_model="adminhtml/system_config_backend_encrypted" />
-                <stapi_host backend_model="adminhtml/system_config_backend_encrypted" />
-                <stapi_port backend_model="adminhtml/system_config_backend_encrypted" />
                 <ws_alias backend_model="adminhtml/system_config_backend_encrypted" />
                 <ws_username backend_model="adminhtml/system_config_backend_encrypted" />
                 <ws_password backend_model="adminhtml/system_config_backend_encrypted" />
                 <ws_verify_ca>1</ws_verify_ca>
-                <transactionsearch_username backend_model="adminhtml/system_config_backend_encrypted" />
-                <transactionsearch_password backend_model="adminhtml/system_config_backend_encrypted" />
-                <transactionsearch_verify_ca>1</transactionsearch_verify_ca>
             </securetrading_stpp_direct>
 	    <securetrading_stpp_tokenization>
+	        <title>Secure Trading Tokenization</title>
 		<model>securetrading_stpp/payment_tokenization</model>
 		<use_iframe>1</use_iframe>
                 <iframe_width>100%</iframe_width>
@@ -221,18 +218,6 @@
 		<use_account_check>0</use_account_check>
 		<use_card_store>0</use_card_store>
 		<max_saved_cc>10</max_saved_cc>
-		<!--
-                <stapi_alias backend_model="adminhtml/system_config_backend_encrypted" />
-                <stapi_host backend_model="adminhtml/system_config_backend_encrypted" />
-                <stapi_port backend_model="adminhtml/system_config_backend_encrypted" />
-                <ws_alias backend_model="adminhtml/system_config_backend_encrypted" />
-                <ws_username backend_model="adminhtml/system_config_backend_encrypted" />
-                <ws_password backend_model="adminhtml/system_config_backend_encrypted" />
-                <ws_verify_ca>1</ws_verify_ca>
-                <transactionsearch_username backend_model="adminhtml/system_config_backend_encrypted" />
-                <transactionsearch_password backend_model="adminhtml/system_config_backend_encrypted" />
-                <transactionsearch_verify_ca>1</transactionsearch_verify_ca>
-		-->
             </securetrading_stpp_tokenization>
             <securetrading_stpp_redirect>
 	        <title>Secure Trading Redirect</title>
@@ -240,21 +225,21 @@
                 <site_security_password backend_model="adminhtml/system_config_backend_encrypted" />
                 <notification_password backend_model="adminhtml/system_config_backend_encrypted" />
                 <payment_action>authorize_capture</payment_action>
+                <accepted_cards backend_model="securetrading_stpp/adminhtml_system_config_backend_multiselect" />
                 <ppg_use_iframe>1</ppg_use_iframe>
                 <ppg_iframe_width>100%</ppg_iframe_width>
                 <ppg_iframe_height>600px</ppg_iframe_height>
+		<ppg_version>2</ppg_version>
                 <parent_css>st.magentoiframeparent</parent_css>
                 <child_js>st.magentoiframechild</child_js>
-                <stapi_alias backend_model="adminhtml/system_config_backend_encrypted" />
-                <stapi_host backend_model="adminhtml/system_config_backend_encrypted" />
-                <stapi_port backend_model="adminhtml/system_config_backend_encrypted" />
+		<st_profile>default</st_profile>
+		<skip_choice_page>1</skip_choice_page>
+		<show_paymenttype_on_magento>0</show_paymenttype_on_magento>
+		<save_cc_question>Save your card details?</save_cc_question>
                 <ws_alias backend_model="adminhtml/system_config_backend_encrypted" />
                 <ws_username backend_model="adminhtml/system_config_backend_encrypted" />
                 <ws_password backend_model="adminhtml/system_config_backend_encrypted" />
                 <ws_verify_ca>1</ws_verify_ca>
-                <transactionsearch_username backend_model="adminhtml/system_config_backend_encrypted" />
-                <transactionsearch_password backend_model="adminhtml/system_config_backend_encrypted" />
-                <transactionsearch_verify_ca>1</transactionsearch_verify_ca>
             </securetrading_stpp_redirect>
         </payment>
     </default>

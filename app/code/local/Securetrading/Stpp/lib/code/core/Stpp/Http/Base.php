@@ -36,13 +36,20 @@ class Stpp_Http_Base extends Stpp_Component_Abstract implements Stpp_Http_BaseIn
   protected $_sleepUseconds = 1000000;
   
   protected $_curlReadFunctionCalled = false;
-  
+
+  protected $_userAgent = '';
+
   public function __construct() {
     parent::__construct();
     $this->_timeout += $this->_connectTimeout; // Allow 60 seconds to send and receive data and allow time for one connection attempt.
     $this->_ch = curl_init();
   }
   
+  public function setUserAgent($userAgent) {
+    $this->_userAgent = $userAgent;
+    return $this;
+  }
+
   public function setUrl($url) {
   	$this->_url = $url;
   	return $this;
@@ -202,7 +209,7 @@ class Stpp_Http_Base extends Stpp_Component_Abstract implements Stpp_Http_BaseIn
   	curl_setopt($this->_ch, CURLOPT_TIMEOUT, $this->_timeout);
   	curl_setopt($this->_ch, CURLOPT_HTTPAUTH, CURLAUTH_BASIC);
   	curl_setopt($this->_ch, CURLOPT_USERPWD, $this->_username . ':' . $this->_password);
-  	curl_setopt($this->_ch, CURLOPT_USERAGENT, '');
+  	curl_setopt($this->_ch, CURLOPT_USERAGENT, $this->_userAgent);
   	curl_setopt($this->_ch, CURLOPT_HTTPHEADER, $this->getHttpHeaders());
   	
     if (!empty($this->_sslCaCertFile)) {

@@ -16,7 +16,9 @@ class Stpp_Fields_Admin extends Stpp_Component_Abstract implements Stpp_Fields_A
     const FIELD_PPG_CHILD_CSS = 'f_ppg_ccss';
     const FIELD_PPG_PARENT_JS = 'f_ppg_pjs';
     const FIELD_PPG_CHILD_JS = 'f_ppg_cjs';
-    const FIELD_PPG_SUB_SITE_REFERENCE = 'f_ppg_ssref';
+    const FIELD_PPG_ST_PROFILE = 'f_ppg_stprofile';
+    const FIELD_PPG_VERSION = 'f_ppg_version';
+    const FIELD_PPG_SKIP_CHOICE_PAGE = 'f_ppg_skipchoice';
 
     const FIELD_PPG_USE_IFRAME = 'f_ppg_iframe';
     const FIELD_PPG_USE_API = 'f_ppg_useapi';
@@ -110,17 +112,25 @@ class Stpp_Fields_Admin extends Stpp_Component_Abstract implements Stpp_Fields_A
                 self::FIELD_TYPE_NAME               => $this->__('Child JS'),
                 self::FIELD_TYPE_DESCRIPTION        => $this->__('The child JS file is loaded after the default Payment Pages Javascript file has been loaded.  You can use a child JS file to make small alterations to the default Payment Pages behaviour.  Upload this file to the MyST File Manager and then enter the filename of the file you uploaded to the File Manager here, without the file path or the extension.'),
             ),
-            self::FIELD_PPG_SUB_SITE_REFERENCE => array(
-                self::FIELD_TYPE_NAME               => $this->__('Sub Site Reference'),
-                self::FIELD_TYPE_DESCRIPTION        => $this->__('The sub site reference, if specified, refers to a set of custom HTML files that will be loaded by the Payment Pages instead of the default HTML files used by  Secure Trading.  These HTML file must be uploaded to the MyST File Manager.  The naming convention of the HTML files is [subsitereference][page type].html.  This field should only contain the sub site reference: the [page type] will be determined by the Payment Pages.'),
+            self::FIELD_PPG_ST_PROFILE => array(
+                self::FIELD_TYPE_NAME               => $this->__('ST Profile'),
+                self::FIELD_TYPE_DESCRIPTION        => $this->__('The ST Profile refers to a set of custom HTML files that will be loaded by the Payment Pages instead of the default HTML files used by  Secure Trading.  These HTML file must be uploaded to the MyST File Manager.  See the Payment Pages documentation for more information.'),
+            ),
+            self::FIELD_PPG_VERSION => array(
+                self::FIELD_TYPE_NAME               => $this->__('Version'),
+                self::FIELD_TYPE_DESCRIPTION        => $this->__('The version of the Payment Pages to use.  Version 1 supports parent/child CSS/JS and version 2 supports the ST Profile.'),
+            ),
+            self::FIELD_PPG_SKIP_CHOICE_PAGE => array(
+                self::FIELD_TYPE_NAME               => $this->__('Skip Choice Page'),
+                self::FIELD_TYPE_DESCRIPTION        => $this->__('Enabling this will let your customers select their payment type (Visa etc.) on your website rather than on the Payment Pages.'),
             ),
             self::FIELD_PPG_USE_IFRAME => array(
                 self::FIELD_TYPE_NAME               => $this->__('Use Iframe'),
                 self::FIELD_TYPE_DESCRIPTION        => $this->__('Enabling this option will make the Payment Pages load in an HTML iframe element.  Using an iframe in combination with parent/child CSS allows you to make it appear as if the Payment Pages are part of your own website.'),
             ),
             self::FIELD_PPG_USE_API => array(
-                self::FIELD_TYPE_NAME               => $this->__('Use API with Payment Pages'),
-                self::FIELD_TYPE_DESCRIPTION        => $this->__('Enabling this option will allow your shopping cart to interact with the Secure Trading API using ST API or our WebServices.  This allows you to perform TRANSACTIONUPDATE and REFUND requests from the shopping cart without using MyST.'),
+                self::FIELD_TYPE_NAME               => $this->__('Perform Back-Office Operations'),
+                self::FIELD_TYPE_DESCRIPTION        => $this->__('Enabling this option will allow your shopping cart to interact with the Secure Trading API using our Web Services.  This allows you to perform TRANSACTIONUPDATE and REFUND requests from the shopping cart without using MyST.'),
             ),
             
             self::FIELD_API_ALL_CONNECTION => array(
