@@ -80,13 +80,8 @@ class Securetrading_Stpp_Model_Integration extends Mage_Core_Model_Abstract {
 				     )
 		      );
 
-      if ($paymentMethod->getConfigData('ppg_version') === '1') {
-        $config['interfaces']['ppages']['sitesecurity']['default_field_override'] = array('currencyiso3a','mainamount','sitereference','settlestatus','settleduedate');
-	$config['interfaces']['ppages']['sitesecurity']['fields'] = array('orderreference', 'accounttypedescription', 'order_increment_ids');
-      }
-      else {
-	$config['interfaces']['ppages']['sitesecurity']['fields'] = array('orderreference', 'accounttypedescription', 'order_increment_ids', 'order_increment_id', 'allurlnotification');
-      }
+
+      $config['interfaces']['ppages']['sitesecurity']['fields'] = array('orderreference', 'accounttypedescription', 'order_increment_ids', 'order_increment_id');
     }
     
     $utilityFacade = Magento_Utility_Facade::instance($config); // Must be done before using any other parts of the STPP framework.

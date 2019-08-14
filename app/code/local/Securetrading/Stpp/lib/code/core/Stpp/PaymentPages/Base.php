@@ -51,6 +51,10 @@ class Stpp_PaymentPages_Base extends Stpp_Component_Abstract implements Stpp_Pay
       'declinedurlredirect',
       'successfulurlnotification',
       'declinedurlnotification',
+      'merchantemail',
+      'allurlnotification',
+      'stextraurlnotifyfields',
+      'stextraurlredirectfields',
     );
 
     protected $_useNotificationHash = true;
