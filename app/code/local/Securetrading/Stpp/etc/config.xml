@@ -3,7 +3,7 @@
 <config>
     <modules>
         <Securetrading_Stpp>
-            <version>3.3.0</version>
+            <version>3.4.0</version>
         </Securetrading_Stpp>
     </modules>
     

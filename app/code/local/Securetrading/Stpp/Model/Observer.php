@@ -28,6 +28,9 @@ class Securetrading_Stpp_Model_Observer {
 			return;
 		}
 		$observer->getEvent()->getOrder()->setCanSendNewEmailFlag(false)->save();
+
+		$order = $observer->getEvent()->getOrder();
+		$order->getPayment()->getMethodInstance()->setPaymentPlaceWithoutMakingApiRequest(true);
 	}
 	
     public function onPaymentInfoBlockPrepareSpecificInformation(Varien_Event_Observer $observer) {

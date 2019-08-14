@@ -112,6 +112,10 @@ class Securetrading_Stpp_Block_Adminhtml_System_Config_Fieldset_Fields
                         $label = $fields->getLabel(Stpp_Fields_Admin::FIELD_PPG_CHILD_JS);
                         $tooltip = $fields->getDescription(Stpp_Fields_Admin::FIELD_PPG_CHILD_JS);
                         break;
+                    case 'sub_site_reference':
+                        $label = $fields->getLabel(Stpp_Fields_Admin::FIELD_PPG_SUB_SITE_REFERENCE);
+                        $tooltip = $fields->getDescription(Stpp_Fields_Admin::FIELD_PPG_SUB_SITE_REFERENCE);
+                        break;
                     case 'use_api':
                         $label = $fields->getLabel(Stpp_Fields_Admin::FIELD_PPG_USE_API);
                         $tooltip = $fields->getDescription(Stpp_Fields_Admin::FIELD_PPG_USE_API);

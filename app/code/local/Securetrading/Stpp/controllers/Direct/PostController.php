@@ -6,9 +6,15 @@ class Securetrading_Stpp_Direct_PostController extends Mage_Core_Controller_Fron
     public function preDispatch() {
         parent::preDispatch();
         
-        $orderIncrementId = Mage::getModel('checkout/session')->getLastRealOrderId();
+	if (Mage::getSingleton('checkout/session')->getQuote()->getIsMultiShipping()) {
+	  $orderIncrementId = array_shift(Mage::getModel('core/session')->getOrderIds());
+	}
+	else {
+	  $orderIncrementId = Mage::getModel('checkout/session')->getLastRealOrderId(); //onepage checkout
+	}
+
         $this->_methodInstance = Mage::getModel('sales/order')->loadByIncrementId($orderIncrementId)->getPayment()->getMethodInstance();
-        
+
         if ($this->_methodInstance->getCode() !== Mage::getModel('securetrading_stpp/payment_direct')->getCode()) {
             throw new Exception(Mage::helper('securetrading_stpp')->__('Cannot access payment method.'));
         }

@@ -71,7 +71,12 @@ class Stpp_Api_Helper extends Stpp_Component_Abstract implements Stpp_Api_Helper
             $requestTypes[] = Stpp_Types::API_RISKDEC;
         }
         
-        return $this->generateRequests($originalRequest, $requestTypes);
+	$requests = $this->generateRequests($originalRequest, $requestTypes);
+
+	if ($requestTypes == array(Stpp_Types::API_RISKDEC, Stpp_Types::API_THREEDQUERY, Stpp_Types::API_AUTH)) { // Fix for STPP gateway bug.
+	  $requests[2]->uns('settlestatus');
+	}
+	return $requests;
     }
 	
 	public function prepare3dAuth(Stpp_Data_Request $request) {

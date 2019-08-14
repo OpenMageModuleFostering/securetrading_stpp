@@ -38,7 +38,7 @@ class Securetrading_Stpp_Model_Payment_Redirect extends Securetrading_Stpp_Model
     
     public function acceptPayment(Mage_Payment_Model_Info $payment) {
         $this->log(sprintf('In %s.', __METHOD__));
-		$data = $this->_getApi()->acceptPaymentAndPrepareApiRequest($payment, $this->getConfigData('site_reference'));
+    	$data = $this->_getApi()->acceptPaymentAndPrepareApiRequest($payment, $this->getConfigData('site_reference'));
     	if ($data) {
     		$this->getIntegration()->runApiTransactionUpdate($payment, $data);
     	}
@@ -47,7 +47,7 @@ class Securetrading_Stpp_Model_Payment_Redirect extends Securetrading_Stpp_Model
     
     public function denyPayment(Mage_Payment_Model_Info $payment) {
         $this->log(sprintf('In %s.', __METHOD__));
-		$data = $this->_getApi()->denyPaymentAndPrepareApiRequest($payment, $this->getConfigData('site_reference'));
+        $data = $this->_getApi()->denyPaymentAndPrepareApiRequest($payment, $this->getConfigData('site_reference'));
         if ($data) {
         	$this->getIntegration()->runApiTransactionUpdate($payment, $data);
         }
@@ -85,14 +85,15 @@ class Securetrading_Stpp_Model_Payment_Redirect extends Securetrading_Stpp_Model
         $data = parent::prepareOrderData($payment, $orderIncrementIds);
         
         return $data += array(
-        	'customfield1' 			=> $payment->getOrder()->getStoreId(),
+            'customfield1' 		=> $payment->getOrder()->getStoreId(),
             'parentcss'     		=> $this->getConfigData('parent_css'),
             'childcss'      		=> $this->getConfigData('child_css'),
             'parentjs'      		=> $this->getConfigData('parent_js'),
             'childjs'       		=> $this->getConfigData('child_js'),
+	    //'subsitereference'          => $this->getConfigData('sub_site_reference'),
             '_charset_'     		=> Mage::getStoreConfig('design/head/default_charset'),
-        	'order_increment_ids' 	=> serialize($orderIncrementIds),
-        	'send_confirmation' 	=> $sendEmailConfirmation,
+            'order_increment_ids' 	=> serialize($orderIncrementIds),
+            'send_confirmation' 	=> $sendEmailConfirmation,
         );
     }
     
@@ -103,7 +104,7 @@ class Securetrading_Stpp_Model_Payment_Redirect extends Securetrading_Stpp_Model
     public function capture(Varien_Object $payment, $amount) {
     	$this->log(sprintf('In %s.', __METHOD__));
     	parent::capture($payment, $amount);
-		$data = $this->_getApi()->prepareToCaptureAuthorized($payment, $amount, $this->getConfigData('site_reference'));
+    	$data = $this->_getApi()->prepareToCaptureAuthorized($payment, $amount, $this->getConfigData('site_reference'));
     	$this->getIntegration()->runApiTransactionUpdate($payment, $data);
     	return $this;
     }
@@ -111,7 +112,7 @@ class Securetrading_Stpp_Model_Payment_Redirect extends Securetrading_Stpp_Model
     public function refund(Varien_Object $payment, $amount) {
     	$this->log(sprintf('In %s.', __METHOD__));
     	parent::refund($payment, $amount);
-		$data = $this->_getApi()->prepareToRefund($payment, $amount, $this->getConfigData('site_reference'));
+    	$data = $this->_getApi()->prepareToRefund($payment, $amount, $this->getConfigData('site_reference'));
     	$this->getIntegration()->runApiRefund($payment, $data);
     	return $this;
     }
