@@ -79,4 +79,8 @@ class Securetrading_Stpp_Model_Transaction extends Mage_Core_Model_Abstract {
         }
         return $this;
     }
+	
+	public function findTransactions($orderId, $requestType) {
+		return array_values($this->getCollection()->addFieldToFilter('order_id', $orderId)->addFieldToFilter('request_type', $requestType)->getItems());
+	}
 }

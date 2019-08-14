@@ -108,17 +108,6 @@ class Securetrading_Stpp_Model_Payment_Direct extends Securetrading_Stpp_Model_P
     }
     
     public function refund(Varien_Object $payment, $amount) {
-    	$parentTransactionId = $immediateParentTransactionId = $payment->getParentTransactionId();
-    	if (!$parentTransactionId) {
-    		throw new Mage_Core_Exception('No parent transaction ID has been set to the payment info instance.  This should always be set when a "Capture" transaction exists in the core transaction table.');
-    	}
-    	
-    	$transaction = $payment->lookupTransaction($parentTransactionId);
-    	
-    	if ($authTransactionId = $transaction->getParentTxnId()) { // If transaction (A) has parent (B) then A = TRANSACTIONUPDATE and B = AUTH.  Otherwise if transaction (A) has no parent then A = AUTH.  This code sets $parentTransactionId to have the transaction reference of the AUTH.
-    		$parentTransactionId = $authTransactionId;
-    	}
-    	
     	$transactionReference = $payment->getCcTransId();
     	$orderIncrementIds = $this->_getOrderIncrementIds($transactionReference);
     	
@@ -154,7 +143,7 @@ class Securetrading_Stpp_Model_Payment_Direct extends Securetrading_Stpp_Model_P
     			'amount_to_refund'					=> $amount,
     			'partial_refund_already_processed' 	=> $partialRefundAlreadyProcessed,
     			'site_reference' 					=> $this->getConfigData('site_reference'),
-    			'transaction_reference' 			=> $parentTransactionId,
+    			'transaction_reference' 			=> $transactionReference,
     			'using_main_amount'					=> true,
     			'currency_iso_3a'					=> $payment->getOrder()->getBaseCurrencyCode(),
     			'allow_suspend'						=> true,
@@ -219,7 +208,7 @@ class Securetrading_Stpp_Model_Payment_Direct extends Securetrading_Stpp_Model_P
     		self::$_reviewingIncrementIds = array();
     	}
     	
-    	$transaction = Mage::getModel('securetrading_stpp/transaction')->loadByTransactionReference($payment->getLastTransId());
+    	$transaction = Mage::getModel('securetrading_stpp/transaction')->loadByTransactionReference($payment->getCcTransId());
     	$requestedSettleStatus = $transaction->getRequestData('settlestatus');
     	 
     	if ($requestedSettleStatus !== '2') { // If the requested settlestatus was 2 there is no need to update the payment (an order should only be put into payment review when the response settlestatus == 2).

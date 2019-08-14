@@ -3,15 +3,15 @@
 <config>
     <modules>
         <Securetrading_Stpp>
-            <version>3.2.0</version>
+            <version>3.2.1</version>
         </Securetrading_Stpp>
     </modules>
     
     <frontend>
         <layout>
             <updates>
-                <securetrading>
-                    <file module="Securetrading_Stpp">securetrading.xml</file>
+                <securetrading module="Securetrading_Stpp">
+					<file>securetrading.xml</file>
                 </securetrading>
             </updates>
         </layout>
@@ -42,8 +42,8 @@
     <adminhtml>
         <layout>
             <updates>
-                <securetrading>
-                    <file module="Securetrading_Stpp">securetrading.xml</file>
+                <securetrading module="Securetrading_Stpp">
+					<file>securetrading.xml</file>
                 </securetrading>
             </updates>
         </layout>
