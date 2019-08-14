@@ -37,9 +37,10 @@ class Securetrading_Stpp_Model_Integration extends Mage_Core_Model_Abstract {
                         'verifyssl'                         => $paymentMethod->getConfigData('ws_verify_ca'),
                         'cacertfile'                        => $paymentMethod->getConfigData('ws_ca_file'),
                     ),
-                    'stapi' => array(
+                    'api' => array(
                         'host'                              => $paymentMethod->getConfigData('stapi_host'),
                         'port'                              => $paymentMethod->getConfigData('stapi_port'),
+                    	'alias'								=> $paymentMethod->getConfigData('stapi_alias'),
                     ),
                 ),
                 'interfaces' => array(
@@ -134,21 +135,45 @@ class Securetrading_Stpp_Model_Integration extends Mage_Core_Model_Abstract {
         return $connections;
     }
     
-    protected function _setOrderIncrementId($orderIncrementId) {
-        $this->_ppagesActionInstance->setOrderIncrementId($orderIncrementId);
-        $this->_apiActionInstance->setOrderIncrementId($orderIncrementId);
+    protected function _setOrderToActionInstances(Mage_Sales_Model_Order $order) {
+    	$this->_apiActionInstance->setOrder($order);
+    	$this->_ppagesActionInstance->setOrder($order);
+    	return $this;
+    }
+    public function runApiTransactionUpdate(Mage_Sales_Model_Order_Payment $payment, array $data) {
+    	$this->_setOrderToActionInstances($payment->getOrder());
+    	$filter = Stpp_Data_Request::instance()->setMultiple($data['filter']);
+    	$updates = Stpp_Data_Request::instance()->setMultiple($data['updates']);
+    	$request = Stpp_Data_Request::instance()->set('filter', $filter)->set('updates', $updates);
+    	$result = $this->_apiFacade->runApiTransactionUpdate($request);
+    	
+    	if (!$result->getIsTransactionSuccessful()) {
+    		throw new Mage_Core_Exception($result->getErrorMessage());
+    	}
+    	return $this;
+    }
+    
+    public function runApiRefund(Mage_Sales_Model_Order_Payment $payment, array $data) {
+    	$this->_setOrderToActionInstances($payment->getOrder());
+    	$request = Stpp_Data_Request::instance()->setMultiple($data);
+    	$result = $this->_apiFacade->runApiRefund($request);
+    	
+    	if (!$result->getIsTransactionSuccessful()) {
+    		throw new Mage_Core_Exception('The gateway did not process the refund successfully.');
+    	}
+    	return $this;
     }
     
     public function runApiStandard(Mage_Sales_Model_Order_Payment $payment, $isMoto = false) {
         $isMoto = $payment->getOrder()->getQuote()->getIsSuperMode();
-        $this->_setOrderIncrementId($payment->getOrder()->getIncrementId());
+        $this->_setOrderToActionInstances($payment->getOrder());
         $data = $this->getPaymentMethod()->prepareOrderData($payment);
         $request = Stpp_Data_Request::instance()->setMultiple($data);
         return $this->_apiFacade->runApiStandard($request, $isMoto);
     }
     
     public function runApi3dAuth() {
-        return $this->_apiFacade->runApi3dAuth(new Stpp_Data_Request());
+    	return $this->_apiFacade->runApi3dAuth(new Stpp_Data_Request());
     }
     
     public function runPaymentPages(array $data, $isMoto = false) {
@@ -171,7 +196,10 @@ class Securetrading_Stpp_Model_Integration extends Mage_Core_Model_Abstract {
         $this->_ppagesFacade->newPaymentPages()->runNotification();
     }
     
-    public function getAcceptedCards($use3dSecure, array $acceptedCards = array()) {
+    public function getAcceptedCards($use3dSecure, $acceptedCards = array()) {
+    	if (!is_array($acceptedCards)) {
+    		$acceptedCards = array();
+    	}
         $helper = $this->_facade->newHelper();
         return $helper->getFilteredCardTypes($use3dSecure, $acceptedCards);
     }
@@ -206,6 +234,10 @@ class Securetrading_Stpp_Model_Integration extends Mage_Core_Model_Abstract {
             $array[$month['numeric']] = $month['short'];
         }
         return $array;
+    }
+    
+    public function getRefundTransactionName() {
+    	return Stpp_Types::API_REFUND;
     }
     
     public function getStartYears() {

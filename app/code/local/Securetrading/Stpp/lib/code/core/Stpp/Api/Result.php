@@ -7,9 +7,9 @@ class Stpp_Api_Result extends Stpp_Result_Abstract implements Stpp_Api_ResultInt
     
     protected $_isTransactionSuccessful = false;
     
-    protected $_customerErrorMessage = '';
+    protected $_successMessage = '';
     
-    protected $_merchantErrorMessage = '';
+    protected $_errorMessage = '';
     
     public function getContext() {
         if ($this->_context === null) {
@@ -40,21 +40,21 @@ class Stpp_Api_Result extends Stpp_Result_Abstract implements Stpp_Api_ResultInt
         return $this;
     }
     
-    public function getCustomerErrorMessage() {
-        return $this->_customerMessage;
+    public function getSuccessMessage() {
+    	return $this->_successMessage;
     }
     
-    public function setCustomerErrorMessage($message) {
-        $this->_customerMessage = $message;
-        return $this;
+    public function setSuccessMessage($message) {
+    	$this->_successMessage = $message;
+    	return $this;
     }
     
-    public function getMerchantErrorMessage() {
-        return $this->_merchantMessage;
+    public function getErrorMessage() {
+    	return $this->_errorMessage;
     }
     
-    public function setMerchantErrorMessage($message) {
-        $this->_merchantMessage = $message;
-        return $this;
+    public function setErrorMessage($message) {
+    	$this->_errorMessage = $message;
+    	return $this;
     }
 }

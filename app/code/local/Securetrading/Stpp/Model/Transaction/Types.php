@@ -8,6 +8,7 @@ class Securetrading_Stpp_Model_Transaction_Types extends Mage_Core_Model_Abstrac
     const TYPE_TRANSACTIONUPDATE ='transactionupdate';
     const TYPE_TRANSACTIONQUERY = 'transactionquery';
     const TYPE_ACCOUNTCHECK = 'accountcheck';
+    const TYPE_REFUND = 'refund';
     const TYPE_ERROR = 'error';
     
     function _construct() {

@@ -7,49 +7,29 @@ class Securetrading_Stpp_Model_Observer {
 	
 		if ($methodInstance->getIsSecuretradingPaymentMethod()) {
 			$methodInstance->log(sprintf('In %s.', __METHOD__));
-	
-			$orders = $observer->getEvent()->getOrders();
 			
-			if ($orders) {
+			if ($observer->getEvent()->getOrders()) { // Multishipping checkout.
+				$orderIncomplete = true;
 				$methodInstance->log('Multishipping checkout.');
-				$this->_onCheckoutSubmitAllAfter_Multishipping($orders, $quote);
 			}
 			else {
 				$orderIncomplete = (bool) $quote->getPayment()->getOrderPlaceRedirectUrl();
-				$methodInstance->log(sprintf('One page checkout.  Order incomplete: %s.', __METHOD__, $orderIncomplete));
-				$this->_onCheckoutSubmitAllAfter_Onepage($observer->getEvent()->getOrder(), $quote, $orderIncomplete);
+				$methodInstance->log(sprintf('One page checkout.  Order incomplete: %s.', $orderIncomplete));
+			}
+			
+			if ($orderIncomplete) {
+				$quote->setIsActive(true)->save();
 			}
 		}
 	}
-    
-    protected function _onCheckoutSubmitAllAfter_orderLoop(Mage_Sales_Model_Order $order, Mage_Sales_Model_Quote $quote, $orderIncomplete = false) {
-    	$collection = $order->getStatusHistoryCollection(true);
-    	foreach($collection as $c) {
-    		$c->delete();
-    	}
-    	
-    	if ($orderIncomplete) {
-    		$stateObject = Mage::getSingleton('securetrading_stpp/transport');
-    		$order->setState($stateObject->getState(), $stateObject->getStatus(), $stateObject->getMessage());
-    		$order->save();
-    		
-    		$quote->setIsActive(true)->save();
-    	}
-    	else {
-    		Mage::getModel('securetrading_stpp/payment_direct')->handleSuccessfulPayment($order);
-    	}
-    }
-    
-    protected function _onCheckoutSubmitAllAfter_Multishipping($orders, Mage_Sales_Model_Quote $quote) {
-    	foreach($orders as $order) {
-    		$this->_onCheckoutSubmitAllAfter_orderLoop($order, $quote, true);
-    	}
-    }
-    
-    protected function _onCheckoutSubmitAllAfter_Onepage(Mage_Sales_Model_Order $order, Mage_Sales_Model_Quote $quote, $orderIncomplete) {
-    		$this->_onCheckoutSubmitAllAfter_orderLoop($order, $quote, $orderIncomplete);
-    }
-    
+	
+	public function onCheckoutTypeMultishippingCreateOrdersSingle(Varien_Event_Observer $observer) {
+		if (!$observer->getEvent()->getOrder()->getPayment()->getMethodInstance()->getIsSecuretradingPaymentMethod()) {
+			return;
+		}
+		$observer->getEvent()->getOrder()->setCanSendNewEmailFlag(false)->save();
+	}
+	
     public function onPaymentInfoBlockPrepareSpecificInformation(Varien_Event_Observer $observer) {
         if (!$observer->getEvent()->getPayment()->getMethodInstance()->getIsSecuretradingPaymentMethod()) {
             return;
@@ -80,12 +60,5 @@ class Securetrading_Stpp_Model_Observer {
         $transport->setData('start_year', $payment->getCcSsStartYear());
         $transport->setData('issue_number', $payment->getCcSsIssue());
         $transport->setData('transaction_reference', $payment->getCcTransId());
-    }
-	
-	public function onCheckoutTypeMultishippingCreateOrdersSingle(Varien_Event_Observer $observer) {
-      if (!$observer->getEvent()->getOrder()->getPayment()->getMethodInstance()->getIsSecuretradingPaymentMethod()) {
-        return;
-      }
-      $observer->getEvent()->getOrder()->setCanSendNewEmailFlag(false)->save();
     }
 }

@@ -4,7 +4,7 @@ class Securetrading_Stpp_Block_Adminhtml_Sales_Transactions extends Mage_Adminht
     public function __construct() {
         $this->_blockGroup = 'securetrading_stpp';
         $this->_controller = 'adminhtml_sales_transactions';
-        $this->_headerText = Mage::helper('securetrading_stpp')->__('Transactions');
+        $this->_headerText = Mage::helper('securetrading_stpp')->__('Secure Trading Transactions');
         parent::__construct();
         $this->_removeButton('add');
     }

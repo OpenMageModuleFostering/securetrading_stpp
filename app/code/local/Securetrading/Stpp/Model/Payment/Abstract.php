@@ -28,7 +28,7 @@ abstract class Securetrading_Stpp_Model_Payment_Abstract extends Mage_Payment_Mo
         return $this;
     }
     
-    public function prepareOrderData(Mage_Sales_Model_Order_Payment $payment, array $orderIncrementIds) {
+    public function prepareOrderData(Mage_Sales_Model_Order_Payment $payment, array $orderIncrementIds, $sendEmailConfirmation = true) {
         $order = $payment->getOrder();
         $billingAddress = $order->getBillingAddress();
         $billingCounty = $billingAddress->getCountry() == 'US' ? $billingAddress->getRegionCode() : $billingAddress->getRegion();
@@ -96,34 +96,30 @@ abstract class Securetrading_Stpp_Model_Payment_Abstract extends Mage_Payment_Mo
         return $data;
     }
     
-    public function registerSuccessfulOrderAfterExternalRedirect($emailConfirmation = true) {
+    public function registerSuccessfulOrderAfterExternalRedirect(Mage_Sales_Model_Order $order, $requestedSettleStatus) {
         $this->log(sprintf('In %s.', __METHOD__));
-        $stateObject = Mage::getSingleton('securetrading_stpp/transport');
-        $order = Mage::getModel('sales/order')->loadByIncrementId($stateObject->getOrderReference());
-        $this->handleSuccessfulPayment($order, $emailConfirmation);
+
+        $amount = $order->getPayment()->getBaseAmountOrdered();
+        
+        if (in_array($requestedSettleStatus, array('0', '1', '100'))) {
+        	$order->getPayment()->registerCaptureNotification($amount, true);
+        }
+        elseif($requestedSettleStatus === '2') {
+        	$order->getPayment()->registerAuthorizationNotification($amount);
+        }
+        else {
+        	throw new Exception(sprintf('Invalid settle status: %s', $requestedSettleStatus));
+        }
+        $order->save();
     }
     
-    public function handleSuccessfulPayment(Mage_Sales_Model_Order $order, $emailConfirmation = true) {
-        $this->log(sprintf('In %s.', __METHOD__));
-        $quote = Mage::getModel('sales/quote')->loadByIdWithoutStore($order->getQuoteId());
-        $stateObject = Mage::getSingleton('securetrading_stpp/transport');
-        if ($quote->getIsActive()) {
-            $quote->setIsActive(false)->save();
-        }
-        $order->setState($stateObject->getState(), $stateObject->getStatus(), $stateObject->getMessage());
-        $order->save();
-        
-        if ($stateObject->getState() === Mage_Sales_Model_Order::STATE_PROCESSING && $stateObject->getStatus() === Mage::getModel('sales/order')->getConfig()->getStateDefaultStatus($stateObject->getState())) {
-            $invoice = $order->prepareInvoice()->register()->pay();
-            $order->addRelatedObject($invoice)->save();
-        }
-        
-        $order->getPayment()
-            ->setAdditionalInformation($stateObject->getAdditionalInformation())
-            ->setCcTransId($stateObject->getTransactionReference())
-            ->setCcLast4($this->getIntegration()->getCcLast4($stateObject->getMaskedPan()))
-            ->save()
-        ;
+    public function handleSuccessfulPayment(Mage_Sales_Model_Order $order, $emailConfirmation) {
+    	$this->log(sprintf('In %s.', __METHOD__));
+    	$quote = Mage::getModel('sales/quote')->loadByIdWithoutStore($order->getQuoteId());
+    	
+    	if ($quote->getIsActive()) {
+    		$quote->setIsActive(false)->save();
+    	}
 		
 		if ($emailConfirmation) {
            $order->sendNewOrderEmail()->save(); // Send last - even if notif times out order status updated etc.  and payment information updated.

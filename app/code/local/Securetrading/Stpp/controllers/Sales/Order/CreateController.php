@@ -21,12 +21,18 @@ class Securetrading_Stpp_Sales_Order_CreateController extends Mage_Adminhtml_Sal
             $order = $this->_getOrderCreateModel()
                 ->setIsValidate(true)
                 ->importPostData($this->getRequest()->getPost('order'))
+                // Start ST Added
+                ->setSendConfirmation(false)
+            	// End ST Added
                 ->createOrder();
 
             // Start ST added.
+            $orderInfo = $this->getRequest()->getPost('order');
+            $sendConfirmation = isset($orderInfo['send_confirmation']);
+            
             $this->_getSession()->setLastOrderIncrementId($order->getIncrementId());
             $path = Mage::getModel('securetrading_stpp/payment_redirect')->getMotoOrderRedirectPath();
-            $this->_redirect($path, array('order_increment_id' => $order->getIncrementId()));
+            $this->_redirect($path, array('order_increment_id' => $order->getIncrementId(), 'send_confirmation' => $sendConfirmation));
             return;
             // end ST added.
             $this->_getSession()->clear();

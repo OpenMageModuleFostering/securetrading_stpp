@@ -3,7 +3,7 @@
 <config>
     <modules>
         <Securetrading_Stpp>
-            <version>3.1.0</version>
+            <version>3.2.0</version>
         </Securetrading_Stpp>
     </modules>
     
@@ -32,6 +32,11 @@
             	</args>
             </checkout>
         </routers>
+        <secure_url>
+            <securetrading_redirect_post_onepage>/securetrading/redirect_post_onepage</securetrading_redirect_post_onepage>
+            <securetrading_redirect_post_multishipping>/securetrading/redirect_post_multishipping</securetrading_redirect_post_multishipping>
+            <securetrading_payment_location>/securetrading/payment/location</securetrading_payment_location>
+        </secure_url>
     </frontend>
 
     <adminhtml>

@@ -92,48 +92,83 @@ class Stpp_Api_Helper extends Stpp_Component_Abstract implements Stpp_Api_Helper
     
     public function prepareRefund(Stpp_Data_Request $originalRequest) {
         $originalOrderTotal = $originalRequest->get('original_order_total', null);
-        $currentOrderTotal = $originalRequest->get('current_order_total', null);
+        $orderTotalPaid = $originalRequest->get('order_total_paid', null);
+        $orderTotalRefunded = $originalRequest->get('order_total_refunded', null);
         $amountToRefund = $originalRequest->get('amount_to_refund', null);
         $transactionReference = $originalRequest->get('transaction_reference', null);
         $partialRefundAlreadyProcessed = $originalRequest->get('partial_refund_already_processed', null);
+        $usingMainAmount = $originalRequest->get('using_main_amount', null);
+        $currencyIso3a = $originalRequest->get('currency_iso_3a', null);
+        $allowSuspend = $originalRequest->get('allow_suspend', null);
+        $siteReference = $originalRequest->get('site_reference');
         
-        if (in_array(null, array($originalOrderTotal, $currentOrderTotal, $amountToRefund, $transactionReference, $partialRefundAlreadyProcessed), true)) {
+        $requests = array();
+        
+        if (in_array(null, array($originalOrderTotal, $orderTotalPaid, $orderTotalRefunded, $amountToRefund, $transactionReference, $partialRefundAlreadyProcessed, $usingMainAmount, $currencyIso3a, $allowSuspend), true)) {
             throw new Stpp_Exception($this->__('Not all parameters were passed to the refund function.'));
         }
         
         $partialRefund = $originalOrderTotal - $amountToRefund > 0;
-        $settleBaseAmount = $currentOrderTotal - $amountToRefund;
+        $settleAmount = $orderTotalPaid - $orderTotalRefunded - $amountToRefund;
         
         if (!$partialRefundAlreadyProcessed) {
-            $filter = Stpp_Data_Request::instance()->set('transactionreference', $transactionReference);
-            
+            $filter = Stpp_Data_Request::instance()->set('transactionreference', $transactionReference)->set('sitereference', $siteReference);
             $updates = Stpp_Data_Request::instance();
             
-            if ($settleBaseAmount > 0) {
-                $updates->set('settlebaseamount', $settleBaseAmount);
+            if ($settleAmount > 0) {
+            	$this->_setAmount($updates, $usingMainAmount, $settleAmount, $currencyIso3a);
             }
             else {
-                $updates->set('settlestatus', 3);
+            	if ($allowSuspend) {
+            		$settleAmount = $originalOrderTotal - $orderTotalPaid;
+        			if ($settleAmount > 0) {
+            			$this->_setAmount($updates, $usingMainAmount, $settleAmount, $currencyIso3a);
+            			$settleStatus = 2;
+        			}
+        			else {
+        				$settleStatus = 3;
+        			}
+            	}
+            	else {
+            		$settleStatus = 3;
+            	}
+            	$updates->set('settlestatus', $settleStatus);
             }
             
             $transactionUpdate = Stpp_Data_Request::instance()
                 ->set('requesttypedescription', Stpp_Types::API_TRANSACTIONUPDATE)
                 ->set('filter', $filter)
                 ->set('updates', $updates);
+            
+            $requests[] = $transactionUpdate;
         }
         
         $refund = Stpp_Data_Request::instance()
             ->set('requesttypedescription', Stpp_Types::API_REFUND)
-            ->set('parenttransactionreference', $transactionReference);
+            ->set('parenttransactionreference', $transactionReference)
+        	->set('sitereference', $siteReference);
         
         if ($partialRefund) {
-            $refund->set('baseamount', $amountToRefund);
+        	if ($usingMainAmount) {
+        		$refund->set('mainamount', $amountToRefund);
+        	}
+        	else {
+        		$refund->set('baseamount', $amountToRefund);
+        	}
         }
         
-        return array(
-            $transactionUpdate,
-            $refund,
-        );
+        $requests[] = $refund;
+        return $requests;
+    }
+    
+    protected function _setAmount(Stpp_Data_Request $updates, $usingMainAmount, $settleAmount, $currencyIso3a) {
+    	if ($usingMainAmount) {
+    		$updates->set('settlemainamount', $settleAmount);
+    		$updates->set('currencyiso3a', $currencyIso3a);
+    	}
+    	else {
+    		$updates->set('settlebaseamount', $settleAmount);
+    	}
     }
     
     public function prepareTransactionUpdate(Stpp_Data_Request $request) {

@@ -40,7 +40,7 @@ class Securetrading_Stpp_Block_Adminhtml_System_Config_Fieldset_Fields
         $fields = Mage::getModel('securetrading_stpp/integration')->getAdminFields();
         $matches = null;
         foreach($element->getElements() as $e) {
-            if (preg_match('/^groups\[[^\[\]]+\]\[fields\]\[(.+)\]\[value\]/', $e->getName(), $matches)) {// removed $ in regex for groups[securetrading_stpp][fields][accepted_cards][value][]
+            if (preg_match('/^groups\[[^\[\]]+\]\[fields\]\[(.+)\]\[value\]/', $e->getName(), $matches)) {
                 $name = $matches[1];
                 switch($name) {
                     case 'site_reference':

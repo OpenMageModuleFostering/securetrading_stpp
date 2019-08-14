@@ -12,12 +12,12 @@ class Stpp_Api_Facade extends Stpp_Facade {
         $apiSend = new Stpp_Api_Send();
         $apiSend->setXmlWriter($this->newApiXmlWriter());
         $apiSend->setXmlReader($this->newApiXmlReader());
-	$apiSend->setContext($this->newApiContext());
+		$apiSend->setContext($this->newApiContext());
 
         if ($this->_config->has('interfaces/api/active_connection')) {
             $connectionStore = $this->newApiConnectionStore();
             $activeConnection = $this->_config->get('interfaces/api/active_connection');
-	    $apiSend->setConnection($connectionStore->get($activeConnection));
+	    	$apiSend->setConnection($connectionStore->get($activeConnection));
         }
         return $apiSend;
     }
@@ -112,6 +112,26 @@ class Stpp_Api_Facade extends Stpp_Facade {
             $webServicesConnection->setAlias($this->_config->get('connections/web_services/alias'));
         }
         
+        if ($this->_config->has('connections/web_services/connect_timeout')) {
+        	$webServicesConnection->setConnectTimeout($this->_config->get('connections/web_services/connect_timeout'));
+        }
+        
+        if ($this->_config->has('connections/web_services/timeout')) {
+        	$webServicesConnection->setTimeout($this->_config->get('connections/web_services/timeout'));
+        }
+        
+        if ($this->_config->has('connections/web_services/connect_attempts')) {
+        	$webServicesConnection->setConnectAttempts($this->_config->get('connections/web_services/connect_attempts'));
+        }
+        
+        if ($this->_config->has('connections/web_services/connect_retries')) {
+        	$webServicesConnection->setConnectRetries($this->_config->get('connections/web_services/connect_retries'));
+        }
+        
+        if ($this->_config->has('connections/web_services/sleep_useconds')) {
+        	$webServicesConnection->setSleepUseconds($this->_config->get('connections/web_services/sleep_useconds'));
+        }
+        
         if ($this->_config->has('connections/web_services/verifyssl')) {
             $webServicesConnection->setVerifySsl($this->_config->get('connections/web_services/verifyssl'));
         }
@@ -120,8 +140,8 @@ class Stpp_Api_Facade extends Stpp_Facade {
             $webServicesConnection->setCaCertFile($this->_config->get('connections/web_services/cacertfile'));
         }
         
-        if ($this->_config->has('connections/web_services/contextoptions')) {
-            $webServicesConnection->setRawCustomContextOptions($this->_config->get('connections/web_services/contextoptions'));
+        if ($this->_config->has('connections/web_services/options')) {
+            $webServicesConnection->setOptions($this->_config->get('connections/web_services/options'));
         }
         return $webServicesConnection;
     }

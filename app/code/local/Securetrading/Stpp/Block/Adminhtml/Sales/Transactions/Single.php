@@ -1,13 +1,13 @@
 <?php
 
-class Securetrading_Stpp_Block_Adminhtml_Sales_Transactions_Single extends Mage_Adminhtml_Block_Widget_Container { //extends Mage_Page_Block_Html {//Mage_Core_Block_Abstract {
+class Securetrading_Stpp_Block_Adminhtml_Sales_Transactions_Single extends Mage_Adminhtml_Block_Widget_Container {
     protected $_transaction;
     
     protected function _construct() {
         $transaction = Mage::registry('current_transaction');
         
         if ($transaction === null) {
-            throw new Stpp_Exception(Mage::helper('securetrading_stpp')->__('A transaction has not been set.'));
+            throw new Exception(Mage::helper('securetrading_stpp')->__('A transaction has not been set.'));
         }
         
         $this->setTransaction($transaction);
@@ -21,13 +21,33 @@ class Securetrading_Stpp_Block_Adminhtml_Sales_Transactions_Single extends Mage_
         ));
     }
     
+    protected function _prepareLayout() {
+        switch($this->getTransaction()->getRequestType()) {
+            case Securetrading_stpp_Model_Transaction_Types::TYPE_AUTH:
+            case Securetrading_stpp_Model_Transaction_Types::TYPE_THREEDQUERY:
+            case Securetrading_stpp_Model_Transaction_Types::TYPE_RISKDEC:
+            case Securetrading_stpp_Model_Transaction_Types::TYPE_ACCOUNTCHECK:
+            case Securetrading_stpp_Model_Transaction_Types::TYPE_CARDSTORE:
+            case Securetrading_stpp_Model_Transaction_Types::TYPE_REFUND:
+            	$block = $this->getLayout()->createBlock('securetrading_stpp/adminhtml_sales_transactions_type_default', '', array('transaction' => $this->getTransaction()));
+            	break;
+            case Securetrading_Stpp_Model_Transaction_Types::TYPE_TRANSACTIONUPDATE:
+            	$block = $this->getLayout()->createBlock('securetrading_stpp/adminhtml_sales_transactions_type_transactionupdate', '', array('transaction' => $this->getTransaction()));
+            	break;
+            default:
+                throw new Exception(sprintf(Mage::helper('securetrading_stpp')->__('Invalid transaction type: "%s".'), $this->getTransaction()->getRequestType()));
+        }
+        $block->setTransaction($this->getTransaction());
+        $this->setChild('transaction_data', $block);
+    }
+    
     public function getHeaderText() {
-        return sprintf('Transaction #%s', $this->getTransaction()->getTransactionReference());
+        return sprintf('Secure Trading Transaction #%s', $this->getTransaction()->getTransactionReference());
     }
     
     public function getTransaction() {
         if ($this->_transaction === null) {
-            throw new Stpp_Exception(Mage::helper('securetrading_stpp')->__('The transaction has not been set.'));
+            throw new Exception(Mage::helper('securetrading_stpp')->__('The transaction has not been set.'));
         }
         return $this->_transaction;
     }
@@ -64,6 +84,10 @@ class Securetrading_Stpp_Block_Adminhtml_Sales_Transactions_Single extends Mage_
     
     public function getErrorCode() {
         return $this->getTransaction()->getErrorCode();
+    }
+    
+    public function getAccountTypeDescription() {
+    	return $this->getTransaction()->getAccountTypeDescription();
     }
     
     public function getLastUpdatedAt() {

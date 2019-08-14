@@ -49,5 +49,38 @@ class Stpp_Api_Context extends Stpp_Component_Abstract implements Stpp_Api_Conte
             throw new Stpp_Exception($this->__('The array index does not exist.'));
         }
         return $responses[$index];
-    }  
+    }
+    
+    public function getRequestsByRequestType(array $requestTypes, $not = false) {
+    	$requests = $this->getRequests();
+    	$filteredRequests = array();
+    
+    	foreach($requests as $key => $request) {
+    		if ($not === false) {
+    			if (in_array($request->get('requesttypedescription'), $requestTypes)) {
+    				$filteredRequests[] = $requests[$key];
+    			}
+    		}
+    		else {
+    			if (!in_array($request->get('requesttypedescription'), $requestTypes)) {
+    				$filteredRequests[] = $requests[$key];
+    			}
+    		}
+    	}
+    	return $filteredRequests;
+    }
+    
+    public function getAreAllRequestsSuccessful($requests = null) {
+    	if ($requests === null) {
+    		$requests = $this->getRequests();
+    	}
+    	$result = true;
+    	foreach($requests as $request) {
+    		if ($request->getIsSuccessful() !== true) {
+    			$result = false;
+    			break;
+    		}
+    	}
+    	return $result;
+    }
 }

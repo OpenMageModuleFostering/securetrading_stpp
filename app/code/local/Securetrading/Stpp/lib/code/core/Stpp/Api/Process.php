@@ -21,8 +21,9 @@ class Stpp_Api_Process extends Stpp_Component_Abstract implements Stpp_Api_Proce
         return $this->_actionInstance;
     }
     
-    public function _setContext(Stpp_Api_ContextInterface $context) {
+    protected function _setContext(Stpp_Api_ContextInterface $context) {
         $this->_context = $context;
+        return $this;
     }
     
     protected function _getContext() {
@@ -34,6 +35,7 @@ class Stpp_Api_Process extends Stpp_Component_Abstract implements Stpp_Api_Proce
     
     public function setResult(Stpp_Api_ResultInterface $result) {
         $this->_result = $result;
+        return $this;
     }
     
     protected function _getResult() {
@@ -55,18 +57,25 @@ class Stpp_Api_Process extends Stpp_Component_Abstract implements Stpp_Api_Proce
         return $this->_apiLog;
     }
 
+    protected function _init(Stpp_Api_ContextInterface $context) {
+    	$result = $this->_getResult();
+    	$result->setContext($context);
+    	$this->_setContext($context);
+    	$this->_getActionInstance()->setResult($result);
+    }
+    
     public function run(Stpp_Api_ContextInterface $context) {
-        $this->_setContext($context);
+        $this->_init($context);
         $this->_handleResponses();
         $this->_calculateIsTransactionSuccessful();
-        $this->_getResult()->setContext($this->_getContext());
+        $this->_calculateMessages();
         return $this->_getResult();
     }
 
     protected function _handleResponses() {
         $responses = $this->_getContext()->getResponses();
         
-        $this->_runStandardRoutines($responses);
+        $this->_runCommonRoutines($responses);
 
         $lastResponseResponseType = $responses[count($responses)-1]->get('responsetype');
         
@@ -105,41 +114,52 @@ class Stpp_Api_Process extends Stpp_Component_Abstract implements Stpp_Api_Proce
         return $this;
     }
     
-    protected function _runStandardRoutines($responses) {
+    protected function _runCommonRoutines($responses) {
         foreach($responses as $response) {
 	    $this->getApiLog()->log($response);
-            
-            $this->_formatErrorMessages(
-                $response->get('errorcode'),
-                $response->get('errormessage'),
-                $response->get('errordata')
-            );
+            $this->_formatErrorMessages($response);
         }
         return $this;
     }
     
-    protected function _formatErrorMessages($errorCode, $errorMessage, $errorData) {
-        $errorCode = (string) $errorCode;
-        $errorMessage = (string) $errorMessage;
-        $errorData = (string) $errorData;
+    protected function _formatErrorMessages(Stpp_Data_Response $response) {
+        $errorCode = (string) $response->get('errorcode');
+        $errorMessage = (string) $response->get('errormessage');
+        $errorData = (string) $response->get('errordata');
         
         switch($errorCode) {
             case "0":
-                $customerMessage = $merchantMessage = $this->__('Transaction successful.');
+                $response->setMessage($this->__('Transaction successful.'))->setMessageIsError(false);
                 break;
             case "30000":
-                $errorData = $errorData === 'pan' ? $this->__('credit/debit card number') : $errorData; // Replace 'pan' with 'card number'.
-                $customerMessage = $merchantMessage = sprintf($this->__('The %s was not provided or was incorrect.'), $errorData);
+                $errorData = $errorData === 'pan' ? $this->__('credit/debit card number') : $errorData;
+                $response->setMessage(sprintf($this->__('The %s was not provided or was incorrect.'), $errorData))->setMessageIsError(true);
                 break;
             case "70000": 
-                $customerMessage = $this->__('Your credit/debit card was declined.  Please try again using a different card.');
-                $merchantMessage = $this->__('The customer\'s credit/debit card was declined.');
+                $response->setMessage($this->__('Your credit/debit card was declined.  Please try again using a different card.'))->setMessageIsError(true);
                 break;
             default:
-                $customerMessage = $this->__('An unexpected error occurred.  Please try again.');
-                $merchantMessage = $errorMessage;
+                $response->setMessage($this->__('An unexpected error occurred.  Please try again.'))->setMessageIsError(true);
         }
-        $this->_getResult()->setCustomerErrorMessage($customerMessage)->setMerchantErrorMessage($merchantMessage);
+        return $this;
+    }
+    
+    protected function _calculateIsTransactionSuccessful() {
+    	$result = null;
+    	$calculationObjects = $this->_getActionInstance()->getCalculationObjects();
+    	 
+    	while ($object = array_shift($calculationObjects)) {
+    		if (($result = $object->calculate($this->_getContext())) !== null) {
+    			$result = (bool) $result;
+    			$this->_getResult()->setIsTransactionSuccessful($result);
+    			return;
+    		}
+    	}
+    	throw new Stpp_Exception($this->__('No calculation objects matched the gateway response.'));
+    }
+    
+    protected function _calculateMessages() {
+    	$this->_getActionInstance()->prepareMessages();
     }
     
     protected function _handleError(Stpp_Data_Response $response) {
@@ -187,64 +207,5 @@ class Stpp_Api_Process extends Stpp_Component_Abstract implements Stpp_Api_Proce
     
     protected function _handleRefund(Stpp_Data_Response $response) {
         return $this->_getActionInstance()->processRefund($response);
-    }
-    
-    protected function _calculateIsTransactionSuccessful() {
-        $requests = $this->_getContext()->getRequests();
-        $transactionSuccessful = false;
-        
-        $cardStore = $this->_findRequests(array(Stpp_Types::API_CARDSTORE));
-        $nonCardStore = $this->_findRequests(array(Stpp_Types::API_CARDSTORE), true);
-        
-        $riskDecision = $this->_findRequests(array(Stpp_Types::API_RISKDEC));
-        $nonRiskDecision = $this->_findRequests(array(Stpp_Types::API_RISKDEC), true);
-        
-        if ($cardStore && !$this->_validateAllRequestsAreSuccessful($cardStore)) {
-            if ($nonCardStore && $this->_validateAllRequestsAreSuccessful($nonCardStore)) {
-                $transactionSuccessful = true; // If one or more CARDSTORE requests failed but other request types exist and are all successful.
-            }
-        }
-        elseif ($riskDecision && !$this->_validateAllRequestsAreSuccessful($riskDecision)) {
-            if ($nonRiskDecision && $this->_validateAllRequestsAreSuccessful($nonRiskDecision)) {
-                $transactionSuccessful = true; // If one or more RISKDEC requests failed but other request types exist and are all successful.
-            }
-        }
-        else {
-            $transactionSuccessful = $this->_validateAllRequestsAreSuccessful($requests);
-        }
-        
-        $isTransactionSuccessful = $this->_getActionInstance()->calculateIsTransactionSuccessful($requests, $transactionSuccessful);
-        $this->_getResult()->setIsTransactionSuccessful($isTransactionSuccessful);
-        return $this;
-    }
-    
-    protected function _validateAllRequestsAreSuccessful(array $requests) {
-        $result = true;
-        foreach($requests as $request) {
-            if ($request->getIsSuccessful() !== true) {
-                $result = false;
-                break;
-            }
-        }
-        return $result;
-    }
-    
-    protected function _findRequests(array $requestTypes, $not = false) {
-        $requests = $this->_getContext()->getRequests();
-        $filteredRequests = array();
-        
-        foreach($requests as $key => $request) {
-            if ($not === false) {
-                if (in_array($request->get('requesttypedescription'), $requestTypes)) {
-                    $filteredRequests[] = $requests[$key];
-                }
-            }
-            else {
-                if (!in_array($request->get('requesttypedescription'), $requestTypes)) {
-                    $filteredRequests[] = $requests[$key];
-                }
-            }
-        }
-        return $filteredRequests;
     }
 }

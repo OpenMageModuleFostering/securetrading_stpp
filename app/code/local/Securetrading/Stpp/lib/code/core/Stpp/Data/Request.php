@@ -84,7 +84,6 @@ class Stpp_Data_Request extends Stpp_Data_Abstract {
     
     protected function _setSettlestatus($settleStatus) {
         $settleStatusArray = Stpp_Types::getSettleStatuses();
-        unset($settleStatusArray['3']);
         if (!array_key_exists($settleStatus, $settleStatusArray)) {
             throw new Stpp_Exception(sprintf($this->__('An invalid settle status ("%s") has been provided.'), $settleStatus));
         }

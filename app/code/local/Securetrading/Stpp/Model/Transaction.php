@@ -21,16 +21,24 @@ class Securetrading_Stpp_Model_Transaction extends Mage_Core_Model_Abstract {
         return $return;
     }
     
-    public function getRequestData() {
-        return $this->_getApiData('request_data');
+    public function getRequestData($key = null, $default = null) {
+    	$data = $this->_getApiData('request_data');
+    	if ($key === null) {
+    		return $data;
+    	}
+    	if (array_key_exists($key, $data)) {
+    		return $data[$key];
+    	}
+    	return $default;
     }
     
     public function setRequestData(array $data = array()) {
         return $this->_setApiData('request_data', $data);
     }
     
-    public function getResponseData() {
-        return $this->_getApiData('response_data');
+    public function getResponseData($key = null) {
+        $data = $this->_getApiData('response_data');
+        return $key === null ? $data : $data[$key];
     }
     
     public function setResponseData(array $data = array()) {
@@ -41,22 +49,33 @@ class Securetrading_Stpp_Model_Transaction extends Mage_Core_Model_Abstract {
     }
     
     public function getParentTransactionReference() {
-        $transaction = Mage::getModel('securetrading_stpp/transaction')->load($this->getParentTransactionId());
-        
-        if ($transaction) {
-            return $transaction->getTransactionReference();
-        }
+    	if ($parentTransaction = $this->getParentTransaction(true)) {
+    		return $parentTransaction->getTransactionReference();
+    	}
         return '';
     }
     
-    public function loadByParentTransactionReference($parentTransactionReference, $graceful = false) {
-        $this->load($parentTransactionReference, 'transaction_reference');
+    public function getParentTransaction($graceful = false) {
+    	if ($this->getParentTransactionId()) {
+    		$parentTransaction = Mage::getModel('securetrading_stpp/transaction')->load($this->getParentTransactionId());
+    		if ($parentTransaction->getId()) {
+    			return $parentTransaction;
+    		}
+    	}
+    	if ($graceful) {
+    		return false;
+    	}
+    	throw new Stpp_Exception(Mage::helper('securetrading_stpp')->__('The parent transaction could not be loaded.'));
+    }
+    
+    public function loadByTransactionReference($transactionReference, $graceful = false) {
+        $this->load($transactionReference, 'transaction_reference');
         
         if (!$this->getTransactionId()) {
             if ($graceful) {
                 return false;
             }
-            throw new Stpp_Exception(sprintf(Mage::helper('securetrading_stpp')->__('A transaction with parent transaction reference "%s" cannot be found.'), $parentTransactionReference));
+            throw new Stpp_Exception(sprintf(Mage::helper('securetrading_stpp')->__('A transaction with a transaction reference of "%s" cannot be found.'), $parentTransactionReference));
         }
         return $this;
     }

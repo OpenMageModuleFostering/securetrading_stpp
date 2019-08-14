@@ -161,6 +161,7 @@ DESTINATIONS
      errordata
      errormessage
      order_increment_ids
+     send_confirmation
 
 5 - Click 'Save'.
 6 - Back on the main Notifications screen, in the first row of the existing notifications table select the newly created filter and destination from the two blank drop-down boxes.
@@ -174,14 +175,27 @@ The notification is now enabled.
 
 Once a customer has successfully processed their transaction using the Secure Trading payment pages they can be redirected back to your Magento store.
 
-Two redirects must be created by completing the redirect request form and emailing it to the Secure Trading Support team (support@securetrading.com).
+You can setup a redirect within MyST provided you have a MyST account with one of the following Roles associated with it:
 
-The Redirect form can be downloaded here: http://www.securetrading.com/support/download/redirect-request-form
+1 - Site Admin
+2 - Developer 1
+3 -	Developer 2
 
-The following information should be included in the redirect form:
+Further information on setting up Redirects using MyST can be found within section 11 of the MyST User Guide (titled 'Payment Pages Redirects') which can be found at the following URL : http://www.securetrading.com/wp-content/uploads/2013/07/STPP-My-ST-User-Guide.pdf
 
-Redirect Form 1:
-----------------
+Redirect 1 Condition:
+---------------------
+  Accounts:
+     ECOM
+
+  Error codes:
+    0
+
+  Requests:
+    AUTH
+
+Redirect 1 Action:
+------------------
   Redirect URL:
     <your_root_magento_install_here>/index.php/securetrading/redirect/redirect
 
@@ -189,34 +203,37 @@ Redirect Form 1:
      orderreference
 
   Custom Fields:
-     storeid
      order_increment_ids
+     
+Redirect 1 - Further Information
+--------------------------------
 
-  Accounttypedescription:
-     ECOM
+ If your Magento installation supports multiple websites then you will need to create this redirect for each store that uses the Payment Pages.  Use the following configuration:
 
-  Errorcode:
+Advanced Settings: (for multiple websites only)
+'Custom field 1 is [your store ID here]'.
+
+Redirect URL: (for multiple websites only)
+<your_root_store_url_here>/index.php/securetrading/redirect/redirect
+
+Redirect 2 Condition:
+---------------------
+  Accounts:
+     MOTO
+
+  Error codes:
     0
 
-  Requesttypedescription:
+  Requests:
     AUTH
-
-Redirect Form 2:
-----------------
+   
+  Redirect 2 Action:
+------------------
   Redirect URL:
     <your_root_magento_install_here>/index.php/admin/sales_order_create_securetrading/redirect
 
   Fields:
      None
-
-  Accounttypedescription:
-     MOTO
-
-  Errorcode:
-    0
-
-  Requesttypedescription:
-    AUTH
 
 ------------------
 2.4. Site Security - (We strongly recommend enabling this feature).

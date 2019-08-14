@@ -75,8 +75,9 @@ abstract class Stpp_Data_Abstract extends Stpp_Component_Abstract implements Stp
     
     public function toArray() {
         $array = array();
+        $class = __CLASS__;
         foreach($this->_data as $k => $v) {
-            if ($v instanceof A_Stpp_Data) {
+            if ($v instanceof $class) {
                $array[$k] = $this->_data[$k]->toArray();
             }
             else {

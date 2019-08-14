@@ -39,7 +39,8 @@ class Stpp_Utility_Log_Writer_File implements Stpp_Utility_Log_WriterInterface {
     
     protected function _moveToArchive($filePath) {
         // Get the filename (the text between the last DIRECTORY_SEPARATOR and the first '.').
-        $fileNameWithExtension = array_pop(explode(DIRECTORY_SEPARATOR, $filePath));
+        $temp = explode(DIRECTORY_SEPARATOR, $filePath);
+        $fileNameWithExtension = array_pop($temp);
         $fileName = substr($fileNameWithExtension, 0, strrpos($fileNameWithExtension, '.'));
 
         // Calculate the full filepath to the log file:

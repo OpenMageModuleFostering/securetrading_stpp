@@ -68,7 +68,7 @@ class Securetrading {
     }
     
     protected static function _autoload($class) {
-        foreach(array(static::$_corePath, static::$_overridesPath) as $folder) {
+        foreach(array(static::$_overridesPath, static::$_corePath) as $folder) {
             $filePath = $folder . str_replace('_', DIRECTORY_SEPARATOR, $class) . '.php';
             if (file_exists($filePath)) {
                 require_once($filePath);

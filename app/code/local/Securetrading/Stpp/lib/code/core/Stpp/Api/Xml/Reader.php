@@ -160,23 +160,23 @@ class Stpp_Api_Xml_Reader extends Stpp_Component_Abstract implements Stpp_Api_Xm
     }
     
     protected function _parseRefundResponse($xmlResponse, &$response) {
-        $response->set('merchantname', (string) $xmlResponse->response->merchant->merchantname);
-        $response->set('orderreference', (string) $xmlResponse->response->merchant->orderreference);
-        $response->set('tid', (string) $xmlResponse->response->merchant->tid);
-        $response->set('merchantnumber', (string) $xmlResponse->response->merchant->merchantnumber);
-        $response->set('merchantcountryiso2a', (string) $xmlResponse->response->merchant->merchantcountryiso2a);
-        $response->set('transactionreference', (string) $xmlResponse->response->transactionreference);
-        $response->set('baseamount', (string) $xmlResponse->response->billing->amount);
-        $response->set('currencyiso3a', (string) $xmlResponse->response->billing->amount->attributes()->currencycode);
-        $response->set('paymenttype', (string) $xmlResponse->response->billing->payment->attributes()->type);
-        $response->set('maskedpan', (string) $xmlResponse->response->billing->payment->pan);
-        $response->set('authcode', (string) $xmlResponse->response->authcode);
-        $response->set('securityresponsecode', (string) $xmlResponse->response->security->securitycode);
-        $response->set('securityresponsepostcode', (string) $xmlResponse->response->security->postcode);
-        $response->set('securityresponseaddress', (string) $xmlResponse->response->security->address);
-        $response->set('parenttransactionreference', (string) $xmlResponse->response->operation->parenttransactionreference);
-        $response->set('accounttypedescription', (string) $xmlResponse->response->operation->accounttypedescription);
-        $response->set('settleduedate', (string) $xmlResponse->response->settlement->settleduedate);
-        $response->set('settlestatus', (string) $xmlResponse->response->settlement->settlestatus);
+        $response->set('merchantname', (string) $xmlResponse->merchant->merchantname);
+        $response->set('orderreference', (string) $xmlResponse->merchant->orderreference);
+        $response->set('tid', (string) $xmlResponse->merchant->tid);
+        $response->set('merchantnumber', (string) $xmlResponse->merchant->merchantnumber);
+        $response->set('merchantcountryiso2a', (string) $xmlResponse->merchant->merchantcountryiso2a);
+        $response->set('transactionreference', (string) $xmlResponse->transactionreference);
+        $response->set('baseamount', (string) $xmlResponse->billing->amount);
+        $response->set('currencyiso3a', (string) $xmlResponse->billing->amount->attributes()->currencycode);
+        $response->set('paymenttype', (string) $xmlResponse->billing->payment->attributes()->type);
+        $response->set('maskedpan', (string) $xmlResponse->billing->payment->pan);
+        $response->set('authcode', (string) $xmlResponse->authcode);
+        $response->set('securityresponsecode', (string) $xmlResponse->security->securitycode);
+        $response->set('securityresponsepostcode', (string) $xmlResponse->security->postcode);
+        $response->set('securityresponseaddress', (string) $xmlResponse->security->address);
+        $response->set('parenttransactionreference', (string) $xmlResponse->operation->parenttransactionreference);
+        $response->set('accounttypedescription', (string) $xmlResponse->operation->accounttypedescription);
+        $response->set('settleduedate', (string) $xmlResponse->settlement->settleduedate);
+        $response->set('settlestatus', (string) $xmlResponse->settlement->settlestatus);
     }
 }

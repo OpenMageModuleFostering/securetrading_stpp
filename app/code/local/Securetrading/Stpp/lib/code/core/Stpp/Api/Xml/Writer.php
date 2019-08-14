@@ -46,7 +46,8 @@ class Stpp_Api_Xml_Writer extends Stpp_Component_Abstract implements Stpp_Api_Xm
     public function endRequestBlock() {
         $this->_writer->endElement(); // </requestblock>
         $this->_writer->endDocument();
-        return $this->_writer->flush();
+        $requestString = $this->_writer->flush();
+        return $requestString;
     }
     
     public function startRequest(Stpp_Data_Request $request) {
@@ -295,10 +296,19 @@ class Stpp_Api_Xml_Writer extends Stpp_Component_Abstract implements Stpp_Api_Xm
 
             // <settlement>
             $xmlWriter->startElement('settlement');
-
-                // <settlebaseamount></settlebaseamount>
-                $xmlWriter->writeElement('settlebaseamount', $request->get('updates')->get('settlebaseamount'));
-
+            
+                if ($request->get('updates')->has('settlebaseamount')) {
+                	// <settlebaseamount></settlebaseamount>
+	                $xmlWriter->writeElement('settlebaseamount', $request->get('updates')->get('settlebaseamount'));
+                }
+                else if ($request->get('updates')->has('settlemainamount')) {
+                	// <settlemainamount currencycode=''></settlemainamount>
+	                $xmlWriter->startElement('settlemainamount');
+	                $xmlWriter->writeAttribute('currencycode', $request->get('updates')->get('currencyiso3a'));
+	                $xmlWriter->text($request->get('updates')->get('settlemainamount'));
+	                $xmlWriter->endElement();
+                }
+                
                 // <settleduedate></settleduedate>
                 $xmlWriter->writeElement('settleduedate', $request->get('updates')->get('settleduedate'));
 
@@ -332,9 +342,12 @@ class Stpp_Api_Xml_Writer extends Stpp_Component_Abstract implements Stpp_Api_Xm
         // <billing>
         $xmlWriter->startElement('billing');
         
-            // <amount></amount>
-            $xmlWriter->writeElement('amount', $request->get('baseamount'));
-            
+	        // <amount></amount>
+	        $xmlWriter->writeElement('amount', $request->get('baseamount'));
+	        
+	        // <mainamount></mainamount>
+	        $xmlWriter->writeElement('mainamount', $request->get('mainamount'));
+	        
         // </billing>
         $xmlWriter->endElement();
         
@@ -484,18 +497,18 @@ class Stpp_Api_Xml_Writer extends Stpp_Component_Abstract implements Stpp_Api_Xm
 
                 // </name>
                 $xmlWriter->endElement();
-
-                // <amount currencycode=''></amount>
-                $xmlWriter->startElement('amount');
-                $xmlWriter->writeAttribute('currencycode', $request->get('currencyiso3a'));
-                $xmlWriter->text($request->get('baseamount'));
-                $xmlWriter->endElement();
-
-                // <mainamount></mainamount>
-                $xmlWriter->startElement('mainamount');
-                $xmlWriter->writeAttribute('currencycode', $request->get('currencyiso3a'));
-                $xmlWriter->text($request->get('mainamount'));
-                $xmlWriter->endElement();
+                
+                if ($request->has('baseamount')) {
+                	// <amount currencycode=''></amount>
+                	$xmlWriter->writeElement('baseamount', $request->get('baseamount'));
+                }
+                elseif($request->has('mainamount')) {
+	                // <mainamount></mainamount>
+	                $xmlWriter->startElement('mainamount');
+	                $xmlWriter->writeAttribute('currencycode', $request->get('currencyiso3a'));
+	                $xmlWriter->text($request->get('mainamount'));
+	                $xmlWriter->endElement();
+                }
                 
                 // <email></email>
                 $xmlWriter->writeElement('email', $request->get('billingemail'));

@@ -10,7 +10,7 @@ class Securetrading_Stpp_Model_Payment_Redirect extends Securetrading_Stpp_Model
     protected $_canAuthorize                = false;
     protected $_canCapture                  = true;
     protected $_canCapturePartial           = false;
-    protected $_canRefund                   = false;
+   	protected $_canRefund                   = false;
     protected $_canRefundInvoicePartial     = false;
     protected $_canVoid                     = false;
     protected $_canUseInternal              = true;
@@ -20,26 +20,34 @@ class Securetrading_Stpp_Model_Payment_Redirect extends Securetrading_Stpp_Model
     protected $_canFetchTransactionInfo     = false;
     protected $_canReviewPayment            = true;
     protected $_canCreateBillingAgreement   = false;
-    protected $_canManageRecurringProfiles  = false;
+   	protected $_canManageRecurringProfiles  = false;
+    
+    public function __construct() {
+    	if ($this->getConfigData('use_api')) {
+    		$this->_canCapturePartial = true;
+    		$this->_canRefund = true;
+    		$this->_canRefundInvoicePartial = true;
+    		
+    		$this->_canUseForMultishipping = $this->getConfigData('payment_action') !== Mage_Payment_Model_Method_Abstract::ACTION_AUTHORIZE; // Disable MultiShipping if Auth Only (3237).
+    	}
+    }
     
     public function initialize($action, $stateObject) {
         $this->log(sprintf('In %s.', __METHOD__));
         parent::initialize($action, $stateObject);
-        Mage::getSingleton('securetrading_stpp/transport')->setState(Mage_Sales_Model_Order::STATE_PENDING_PAYMENT)->setStatus(Securetrading_Stpp_Model_Payment_Abstract::STATUS_PENDING_PPAGES)->setMessage("Customer redirect to the SecureTrading Payment Pages.");
+        $stateObject->setState(Mage_Sales_Model_Order::STATE_PENDING_PAYMENT)->setStatus(Securetrading_Stpp_Model_Payment_Abstract::STATUS_PENDING_PPAGES);
     }
     
     public function acceptPayment(Mage_Payment_Model_Info $payment) {
         $this->log(sprintf('In %s.', __METHOD__));
         parent::acceptPayment($payment);
-        $invoice = $payment->getOrder()->prepareInvoice()->register()->pay();
-        $payment->getOrder()->addRelatedObject($invoice)->save();
-        return true;
+        return $this->_getApi()->acceptPayment($payment);
     }
     
     public function denyPayment(Mage_Payment_Model_Info $payment) {
         $this->log(sprintf('In %s.', __METHOD__));
         parent::denyPayment($payment);
-        return true;
+        return $this->_getApi()->denyPayment($payment);
     }
     
     protected function _useFirstPathIfIframe($path1, $path2) {
@@ -53,6 +61,7 @@ class Securetrading_Stpp_Model_Payment_Redirect extends Securetrading_Stpp_Model
     	$this->log(sprintf('In %s.', __METHOD__));
     	return Mage::getUrl($this->getOrderPlaceRedirectPath());
     }
+    
     public function getOrderPlaceRedirectPath() {
     	$this->log(sprintf('In %s.', __METHOD__));
     	return $this->_useFirstPathIfIframe('securetrading/redirect_post_onepage/iframe', 'securetrading/redirect_post_onepage/container');
@@ -67,24 +76,49 @@ class Securetrading_Stpp_Model_Payment_Redirect extends Securetrading_Stpp_Model
     	return $this->_useFirstPathIfIframe('*/sales_order_create_securetrading/iframe', '*/sales_order_create_securetrading/post');
     }
     
-    public function prepareOrderData(Mage_Sales_Model_Order_Payment $payment, array $orderIncrementIds) {
+    public function prepareOrderData(Mage_Sales_Model_Order_Payment $payment, array $orderIncrementIds, $sendEmailConfirmation = true) {
         $this->log(sprintf('In %s.', __METHOD__));
         $data = parent::prepareOrderData($payment, $orderIncrementIds);
         
         return $data += array(
-            'storeid'       => $payment->getOrder()->getStoreId(),
-            'parentcss'     => $this->getConfigData('parent_css'),
-            'childcss'      => $this->getConfigData('child_css'),
-            'parentjs'      => $this->getConfigData('parent_js'),
-            'childjs'       => $this->getConfigData('child_js'),
-            '_charset_'     => Mage::getStoreConfig('design/head/default_charset'),
-        	'order_increment_ids' => serialize($orderIncrementIds),
+        	'customfield1' 			=> $payment->getOrder()->getStoreId(),
+            'parentcss'     		=> $this->getConfigData('parent_css'),
+            'childcss'      		=> $this->getConfigData('child_css'),
+            'parentjs'      		=> $this->getConfigData('parent_js'),
+            'childjs'       		=> $this->getConfigData('child_js'),
+            '_charset_'     		=> Mage::getStoreConfig('design/head/default_charset'),
+        	'order_increment_ids' 	=> serialize($orderIncrementIds),
+        	'send_confirmation' 	=> $sendEmailConfirmation,
         );
     }
     
-    public function prepareData($isMoto = false, array $orderIncrementIds) {
+    protected function _getApi() {
+    	return Mage::getModel('securetrading_stpp/payment_direct');
+    }
+    
+    public function capture(Varien_Object $payment, $amount) {
+    	$this->log(sprintf('In %s.', __METHOD__));
+    	parent::capture($payment, $amount);
+    	$this->_getApi()->captureAuthorized($payment, $amount);
+    	return $this;
+    }
+    
+    public function refund(Varien_Object $payment, $amount) {
+    	$this->log(sprintf('In %s.', __METHOD__));
+    	parent::refund($payment, $amount);
+    	$this->_getApi()->refund($payment, $amount);
+    	return $this;
+    }
+    
+    public function cancel(Varien_Object $payment) {
+    	$this->log(sprintf('In %s.', __METHOD__));
+    	$this->_getApi()->cancel($payment);
+    	return $this;
+    }
+  
+    public function prepareData($isMoto = false, array $orderIncrementIds = array(), $sendEmailConfirmation = true) {
         $this->log(sprintf('In %s.', __METHOD__));
-        $data = $this->prepareOrderData($this->getInfoInstance(), $orderIncrementIds);
+        $data = $this->prepareOrderData($this->getInfoInstance(), $orderIncrementIds, $sendEmailConfirmation);
         $transport = $this->getIntegration()->runPaymentPages($data, $isMoto);
         return $transport;
     }

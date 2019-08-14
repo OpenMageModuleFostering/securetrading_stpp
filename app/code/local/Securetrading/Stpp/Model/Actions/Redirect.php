@@ -21,7 +21,7 @@ class Securetrading_Stpp_Model_Actions_Redirect extends Securetrading_Stpp_Model
     public function processAuth(Stpp_Data_Response $response) {
     	$firstOrder = true;
     	foreach($this->_getOrderIncrementIds($response) as $orderIncrementId) {
-    		$response->set('orderreference', $orderIncrementId);
+    		$this->setOrder(Mage::getModel('sales/order')->loadByIncrementId($orderIncrementId));
     		$this->_processAuth($response, $firstOrder);
     		$firstOrder = false;
     	}
@@ -30,7 +30,7 @@ class Securetrading_Stpp_Model_Actions_Redirect extends Securetrading_Stpp_Model
     
     public function process3dQuery(Stpp_Data_Response $response) {
     	foreach($this->_getOrderIncrementIds($response) as $orderIncrementId) {
-    		$response->set('orderreference', $orderIncrementId);
+    		$this->setOrder(Mage::getModel('sales/order')->loadByIncrementId($orderIncrementId));
     		parent::process3dQuery($response);
     	}
     	return $this->_isErrorCodeZero($response);
@@ -38,7 +38,7 @@ class Securetrading_Stpp_Model_Actions_Redirect extends Securetrading_Stpp_Model
     
     public function processRiskDecision(Stpp_Data_Response $response) {
     	foreach($this->_getOrderIncrementIds($response) as $orderIncrementId) {
-    		$response->set('orderreference', $orderIncrementId);
+    		$this->setOrder(Mage::getModel('sales/order')->loadByIncrementId($orderIncrementId));
     		parent::processRiskDecision($response);
     	}
     	return $this->_isErrorCodeZero($response);
@@ -46,7 +46,7 @@ class Securetrading_Stpp_Model_Actions_Redirect extends Securetrading_Stpp_Model
     
     public function processTransactionUpdate(Stpp_Data_Response $response) {
     	foreach($this->_getOrderIncrementIds($response) as $orderIncrementId) {
-    		$response->set('orderreference', $orderIncrementId);
+    		$this->setOrder(Mage::getModel('sales/order')->loadByIncrementId($orderIncrementId));
     		parent::processTransactionUpdate($response);
     	}
     	return $this->_isErrorCodeZero($response);
@@ -54,7 +54,7 @@ class Securetrading_Stpp_Model_Actions_Redirect extends Securetrading_Stpp_Model
     
     public function processRefund(Stpp_Data_Response $response) {
     	foreach($this->_getOrderIncrementIds($response) as $orderIncrementId) {
-    		$response->set('orderreference', $orderIncrementId);
+    		$this->setOrder(Mage::getModel('sales/order')->loadByIncrementId($orderIncrementId));
     		parent::processRefund($response);
     	}
     	return $this->_isErrorCodeZero($response);
@@ -62,7 +62,7 @@ class Securetrading_Stpp_Model_Actions_Redirect extends Securetrading_Stpp_Model
     
     public function processAccountCheck(Stpp_Data_Response $response) {
     	foreach($this->_getOrderIncrementIds($response) as $orderIncrementId) {
-    		$response->set('orderreference', $orderIncrementId);
+    		$this->setOrder(Mage::getModel('sales/order')->loadByIncrementId($orderIncrementId));
     		parent::processAccountCheck($response);
     	}
     	return $this->_isErrorCodeZero($response);
@@ -70,12 +70,8 @@ class Securetrading_Stpp_Model_Actions_Redirect extends Securetrading_Stpp_Model
     
    	public function _processAuth(Stpp_Data_Response $response, $firstOrder) {
         parent::processAuth($response);
-        if ($response->get('errorcode') === '0') {
-			$emailConfirmation = $response->getRequest()->get('accounttypedescription') === 'MOTO' ? false : true;
-            Mage::getModel('securetrading_stpp/payment_redirect')->registerSuccessfulOrderAfterExternalRedirect($emailConfirmation);
-        }
         
-        $order = Mage::getModel('sales/order')->loadByIncrementId($response->get('orderreference'));
+        $order = $this->_getOrder($response);
         $payment = $order->getPayment();
         
         $payment->setCcType($response->get('paymenttypedescription'));
@@ -83,6 +79,12 @@ class Securetrading_Stpp_Model_Actions_Redirect extends Securetrading_Stpp_Model
         $payment->save();
         
         $this->_updateOrder($response, $order, $firstOrder);
+        
+        if ($response->get('errorcode') === '0') {
+        	Mage::getModel('securetrading_stpp/payment_redirect')->registerSuccessfulOrderAfterExternalRedirect($order, $this->_getRequestedSettleStatus($response));
+        	$emailConfirmation = $response->get('accounttypedescription') === 'MOTO' ? (bool) $response->get('send_confirmation') : true;
+        	$payment->getMethodInstance()->handleSuccessfulPayment($order, $emailConfirmation);
+        }
     }
     
     protected function _updateOrder(Stpp_Data_Response $response, Mage_Sales_Model_Order $order, $firstOrder) {

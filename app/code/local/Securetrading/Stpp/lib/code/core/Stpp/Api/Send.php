@@ -61,17 +61,16 @@ class Stpp_Api_Send extends Stpp_Component_Abstract implements Stpp_Api_SendInte
         $xmlRequestString = $this->_formXmlRequests($requestArray);
         $xmlResponseString = $this->getConnection()->sendAndReceiveData($xmlRequestString);
         $responseArray = $this->_getXmlReader()->parseResponses($xmlResponseString);
-	$this->_mapRequestsToResponses($requestArray, $responseArray);
-	$this->_getContext()->setRequests($requestArray)->setResponses($responseArray);
-	return $this->_getContext();
+		$this->_mapRequestsToResponses($requestArray, $responseArray);
+		$this->_getContext()->setRequests($requestArray)->setResponses($responseArray);
+		return $this->_getContext();
     }
 
     protected function _formXmlRequests(array $requests) {
         $xmlWriter = $this->_getXmlWriter();
-        
         $xmlWriter->startRequestBlock(static::API_VERSION, $this->getConnection()->getAlias());
         
-	foreach($requests as $request) {
+		foreach($requests as $request) {
             $xmlWriter->startRequest($request);
             
             $requestType = $request->get('requesttypedescription');

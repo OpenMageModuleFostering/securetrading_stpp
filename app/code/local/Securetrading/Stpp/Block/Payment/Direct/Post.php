@@ -7,7 +7,7 @@ class Securetrading_Stpp_Block_Payment_Direct_Post extends Mage_Core_Block_Templ
         $session = Mage::getSingleton('securetrading_stpp/payment_direct_session');
         
         if (!$session->hasAcsRedirectParams() || !($session->getAcsRedirectParams() instanceof Varien_Object)) {
-            throw new Stpp_Exception(Mage::helper('securetrading_stpp')->__('The ACS parameters could not be retrieved correctly.'));
+            throw new Exception(Mage::helper('securetrading_stpp')->__('The ACS parameters could not be retrieved correctly.'));
         }
         
         $this->_params = $session->getAcsRedirectParams();

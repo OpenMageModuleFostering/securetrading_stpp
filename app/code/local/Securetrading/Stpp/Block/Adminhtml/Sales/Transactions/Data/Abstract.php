@@ -17,7 +17,7 @@ abstract class Securetrading_Stpp_Block_Adminhtml_Sales_Transactions_Data_Abstra
     
     protected function _prepareCollection() {
         $collection = new Varien_Data_Collection();
-        foreach ($this->getTransactionAdditionalInfo() as $key => $value) {
+        foreach ($this->_getGridData() as $key => $value) {
             $data = new Varien_Object(array('key' => $key, 'value' => $value));
             $collection->addItem($data);
         }
@@ -45,5 +45,5 @@ abstract class Securetrading_Stpp_Block_Adminhtml_Sales_Transactions_Data_Abstra
         return parent::_prepareColumns();
     }
     
-    abstract public function getTransactionAdditionalInfo();
+    abstract protected function _getGridData();
 }

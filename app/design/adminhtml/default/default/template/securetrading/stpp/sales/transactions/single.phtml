@@ -46,6 +46,10 @@
                         <td><?php echo $this->getErrorCode() ?></td>
                     </tr>
                     <tr>
+                        <th><?php echo $this->__('Account Type'); ?></th>
+                        <td><?php echo $this->getAccountTypeDescription() ?></td>
+                    </tr>
+                    <tr>
                         <th><?php echo $this->__('Last Updated At'); ?></th>
                         <td><?php echo $this->getLastUpdatedAt() ?></td>
                     </tr>
@@ -53,7 +57,7 @@
                         <th><?php echo $this->__('Order ID'); ?></th>
                         <td>
                             <a href="<?php print $this->getOrderUrl(); ?>">
-                                <?php echo $this->getOrderId() ?>
+                                <?php echo $this->getOrderIncrementId() ?>
                             </a>
                         </td>
                     </tr>
@@ -77,14 +81,14 @@
         </div>
     </div>
 </div>
-
+<!--
 <div class="entry-edit">
     <div class="entry-edit">
         <div class="entry-edit-head">
-            <h4 class="icon-head head-edit-form fieldset-legend"><?php echo $this->__('Request Data'); ?></h4>
+            <h4 class="icon-head head-edit-form fieldset-legend"><?php //echo $this->__('Request Data'); ?></h4>
         </div>
         <div class="log-details-grid">
-            <?php print $this->getChildHtml('request_data'); ?>
+            <?php //print $this->getChildHtml('request_data'); ?>
         </div>
     </div>
 </div>
@@ -93,10 +97,12 @@
 <div class="entry-edit">
     <div class="entry-edit">
         <div class="entry-edit-head">
-            <h4 class="icon-head head-edit-form fieldset-legend"><?php echo $this->__('Response Data'); ?></h4>
+            <h4 class="icon-head head-edit-form fieldset-legend"><?php //echo $this->__('Response Data'); ?></h4>
         </div>
         <div class="log-details-grid">
-            <?php print $this->getChildHtml('response_data'); ?>
+            <?php //print $this->getChildHtml('response_data'); ?>
         </div>
     </div>
 </div>
+-->
+<?php print $this->getChildHtml('transaction_data'); ?>

@@ -43,4 +43,9 @@
             <block type="securetrading_stpp/payment_iframe" name="securetrading_stpp.payment.iframe" as="iframe" template="securetrading/stpp/payment/iframe.phtml" />
         </reference>
     </adminhtml_sales_order_create_securetrading_iframe>
+    
+    <adminhtml_sales_order_create_securetrading_location>
+        <remove name="root" />
+        <block type="securetrading_stpp/payment_location" name="securetrading_stpp.payment.location" as="location" template="securetrading/stpp/payment/location.phtml" output="toHtml" />
+    </adminhtml_sales_order_create_securetrading_location>
 </layout>

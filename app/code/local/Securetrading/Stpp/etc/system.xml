@@ -36,7 +36,7 @@
                                         <active>
                                             <config_path>payment/securetrading_stpp_redirect/active</config_path>
                                             <frontend_type>select</frontend_type>
-1                                            <source_model>adminhtml/system_config_source_yesno</source_model>
+                                            <source_model>adminhtml/system_config_source_yesno</source_model>
                                             <sort_order>0</sort_order>
                                             <show_in_default>1</show_in_default>
                                             <show_in_website>1</show_in_website>
@@ -189,7 +189,6 @@
                                             <show_in_website>1</show_in_website>
                                             <show_in_store>1</show_in_store>
                                         </child_js>
-                                        <!--
                                         <use_api>
                                             <config_path>payment/securetrading_stpp_redirect/use_api</config_path>
                                             <frontend_type>select</frontend_type>
@@ -199,7 +198,6 @@
                                             <show_in_website>1</show_in_website>
                                             <show_in_store>1</show_in_store>
                                         </use_api>
-                                        -->
                                         <payment_action>
                                             <config_path>payment/securetrading_stpp_redirect/payment_action</config_path>
                                             <frontend_type>select</frontend_type>
@@ -231,7 +229,6 @@
                                 </securetrading_stpp_redirect_config_gateway>
                             </fields>
                         </securetrading_stpp_redirect>
-                        <!--
                         <securetrading_stpp_direct type="group" translate="label comment" module="securetrading_stpp">
                             <label>SecureTrading API</label>
                             <comment>Allows your store to capture credit card details.  Your store must be PCI compliant to use this payment method.</comment>
@@ -242,6 +239,7 @@
                             <show_in_website>1</show_in_website>
                             <show_in_store>1</show_in_store>
                             <fields>
+                            <!--
                                 <securetrading_stpp_direct_config_basic type="group" translate="label comment" module="securetrading_stpp">
                                     <label>Basic Configuration</label>
                                     <comment>Affects how Magento works with your payment method.</comment>
@@ -322,6 +320,7 @@
                                         </api_iframe_width>
                                     </fields>
                                 </securetrading_stpp_direct_config_basic>
+                                -->
                                 <securetrading_stpp_direct_config_gateway type="group" translate="label comment" module="securetrading_stpp">
                                     <label>Gateway Configuration</label>
                                     <comment>Affect how requests to and responses from the SecureTrading gateway are processed.</comment>
@@ -350,6 +349,7 @@
                                             <show_in_website>1</show_in_website>
                                             <show_in_store>1</show_in_store>
                                         </connection>
+                                        <!-- 
                                         <use_3d_secure>
                                             <config_path>payment/securetrading_stpp_direct/use_3d_secure</config_path>
                                             <frontend_type>select</frontend_type>
@@ -432,6 +432,7 @@
                                             <show_in_website>1</show_in_website>
                                             <show_in_store>1</show_in_store>
                                         </settle_status>
+                                        -->
                                     </fields>
                                 </securetrading_stpp_direct_config_gateway>
                                 <securetrading_stpp_direct_config_connections type="group" translate="label comment" module="securetrading_stpp">
@@ -541,7 +542,6 @@
                                 </securetrading_stpp_direct_config_connections>
                              </fields>
                         </securetrading_stpp_direct>
-                        -->
                     </fields>
                 </securetrading_stpp_group>
             </groups>

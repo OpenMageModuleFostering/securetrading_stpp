@@ -24,7 +24,7 @@ class Securetrading_Stpp_Block_Adminhtml_Sales_Transactions_Grid extends Mage_Ad
     
     protected function _prepareColumns() {
         $this->addColumn('transaction_id', array(
-            'header'    => Mage::helper('securetrading_stpp')->__('Transaction ID'),
+            'header'    => Mage::helper('securetrading_stpp')->__('ID#'),
             'index'     => 'transaction_id',
         ));
         $this->addColumn('transaction_reference', array(
@@ -52,6 +52,10 @@ class Securetrading_Stpp_Block_Adminhtml_Sales_Transactions_Grid extends Mage_Ad
             'header'    => Mage::helper('securetrading_stpp')->__('Error Code'),
             'index'     => 'error_code',
             'type'      => 'number',
+        ));
+        $this->addColumn('account_type_description', array(
+        		'header'    => Mage::helper('securetrading_stpp')->__('Account Type'),
+        		'index'     => 'account_type_description',
         ));
         $this->addColumn('last_updated_at', array(
             'header'    => Mage::helper('securetrading_stpp')->__('Last Updated At'),

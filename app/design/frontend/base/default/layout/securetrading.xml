@@ -73,8 +73,8 @@
     
     <securetrading_stpp_direct_post_container>
         <update handle="securetrading_stpp_payment" />
-        <reference name="content"><!--TODO - does below block exist!? -->
-            <block type="securetrading_stpp/payment_direct_acs" name="securetrading_stpp.payment.direct.acs" template="securetrading/stpp/payment/direct/acs.phtml" />
+        <reference name="content">
+            <block type="securetrading_stpp/payment_direct_post" name="securetrading_stpp.payment.direct.post" template="securetrading/stpp/payment/direct/post.phtml" />
         </reference>
     </securetrading_stpp_direct_post_container>
     
