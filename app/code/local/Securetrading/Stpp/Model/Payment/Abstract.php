@@ -1,0 +1,122 @@
+<?php
+
+abstract class Securetrading_Stpp_Model_Payment_Abstract extends Mage_Payment_Model_Method_Abstract {
+    const STATUS_AUTHORIZED  = 'authorized';
+    const STATUS_SUSPENDED  = 'suspended';
+    const STATUS_PENDING_PPAGES = 'pending_ppages';
+    const STATUS_PENDING_3DSECURE = 'pending_3dsecure';
+    
+    final public function getIsSecuretradingPaymentMethod() {
+        return true;
+    }
+    
+    public function getIntegration() {
+        return Mage::getModel('securetrading_stpp/integration', array('payment_method' => $this));
+    }
+    
+    public function log($message) {
+        try {
+            $order = $this->getInfoInstance()->getOrder();
+        }
+        catch (Exception $e) {
+            // Do nothing here intentionally.
+        }
+        $sidToken = md5(Mage::getModel('core/session')->getSessionId());
+        $orderIncrementId = isset($order) && $order ? $order->getIncrementId() : 'N/A';
+        $message = $this->_code . ' - ' .$orderIncrementId . ' - ' . $sidToken . ' - ' . $message;
+        $this->getIntegration()->getDebugLog()->log($message);
+        return $this;
+    }
+    
+    public function prepareOrderData(Mage_Sales_Model_Order_Payment $payment) {
+        $order = $payment->getOrder();
+        $billingAddress = $order->getBillingAddress();
+        $billingCounty = $billingAddress->getCountry() == 'US' ? $billingAddress->getRegionCode() : $billingAddress->getRegion();
+        $billingTelephoneNumber = $billingAddress->getTelephone();
+        $billingTelephoneType = !empty($billingTelephoneNumber) ? 'H' : '';
+        $customerDobFull = $order->getCustomerDob();
+        $customerDobArray = explode(' ', $customerDobFull);
+        $customerDob = $customerDobArray[0];
+        
+        $data = array(
+            'sitereference'             => $this->getConfigData("site_reference"),
+            'currencyiso3a'             => $order->getBaseCurrencyCode(),
+            'mainamount'                => $order->getBaseTotalDue(),
+            
+            'billingprefixname'         => $billingAddress->getPrefix(),
+            'billingfirstname'          => $billingAddress->getFirstname(),
+            'billingmiddlename'         => $billingAddress->getMiddlename(),
+            'billinglastname'           => $billingAddress->getLastname(),
+            'billingsuffixname'         => $billingAddress->getSuffix(),
+            'billingemail'              => $billingAddress->getEmail(),
+            'billingtelephone'          => $billingTelephoneNumber,
+            'billingtelephonetype'      => $billingTelephoneType,
+            'billingpremise'            => $billingAddress->getStreet(1),
+            'billingstreet'             => $billingAddress->getStreet(2),
+            'billingtown'               => $billingAddress->getCity(),
+            'billingcounty'             => $billingCounty,
+            'billingpostcode'           => $billingAddress->getPostcode(),
+            'billingcountryiso2a'       => $billingAddress->getCountry(),
+            'billingdob'                => $customerDob,
+            
+            'settleduedate'             => $this->getConfigData('settle_due_date'),
+            'settlestatus'              => $this->getConfigData('payment_action') === Mage_Payment_Model_Method_Abstract::ACTION_AUTHORIZE ? 2 : $this->getConfigData('settle_status'),
+            'orderreference'            => $order->getIncrementId(),
+        );
+        
+        if ($order->getShippingMethod()) {
+            $customerAddress = $order->getShippingAddress();
+            $customerCounty = $customerAddress->getCountry() == 'US' ? $customerAddress->getRegionCode() : $customerAddress->getRegion();
+            $customerTelephoneNumber = $customerAddress->getTelephone();
+            $customerTelephoneType = !empty($customerTelephoneNumber) ? 'H' : '';
+            
+            $data += array(
+                'customerprefixname'        => $customerAddress->getPrefix(),
+                'customerfirstname'         => $customerAddress->getFirstname(),
+                'customermiddlename'        => $customerAddress->getMiddlename(),
+                'customerlastname'          => $customerAddress->getLastname(),
+                'customersuffixname'        => $customerAddress->getSuffix(),
+                'customeremail'             => $customerAddress->getEmail(),
+                'customertelephone'         => $customerTelephoneNumber,
+                'customertelephonetype'     => $customerTelephoneType,
+                'customerpremise'           => $customerAddress->getStreet(1),
+                'customerstreet'            => $customerAddress->getStreet(2),
+                'customertown'              => $customerAddress->getCity(),
+                'customercounty'            => $customerCounty,
+                'customerpostcode'          => $customerAddress->getPostcode(),
+                'customercountryiso2a'      => $customerAddress->getCountry(),
+            );
+        }
+        return $data;
+    }
+    
+    public function registerSuccessfulOrderAfterExternalRedirect() {
+        $this->log(sprintf('In %s.', __METHOD__));
+        $stateObject = Mage::getSingleton('securetrading_stpp/transport');
+        $order = Mage::getModel('sales/order')->loadByIncrementId($stateObject->getOrderReference());
+        $this->handleSuccessfulPayment($order);
+    }
+    
+    public function handleSuccessfulPayment(Mage_Sales_Model_Order $order) {
+        $this->log(sprintf('In %s.', __METHOD__));
+        $quote = Mage::getModel('sales/quote')->loadByIdWithoutStore($order->getQuoteId());
+        $stateObject = Mage::getSingleton('securetrading_stpp/transport');
+        if ($quote->getIsActive()) {
+            $quote->setIsActive(false)->save();
+        }
+        $order->setState($stateObject->getState(), $stateObject->getStatus(), $stateObject->getMessage());
+        $order->save();
+        
+        if ($stateObject->getState() === Mage_Sales_Model_Order::STATE_PROCESSING && $stateObject->getStatus() === Mage::getModel('sales/order')->getConfig()->getStateDefaultStatus($stateObject->getState())) {
+            $invoice = $order->prepareInvoice()->register()->pay();
+            $order->addRelatedObject($invoice)->save();
+        }
+        
+        $order->getPayment()
+            ->setAdditionalInformation($stateObject->getAdditionalInformation())
+            ->setCcTransId($stateObject->getTransactionReference())
+            ->setCcLast4($this->getIntegration()->getCcLast4($stateObject->getMaskedPan()))
+            ->save()
+        ;
+    }
+}

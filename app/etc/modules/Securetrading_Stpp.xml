@@ -1,0 +1,8 @@
+<config>
+    <modules>
+        <Securetrading_Stpp>
+            <codePool>local</codePool>
+            <active>true</active>
+        </Securetrading_Stpp>
+    </modules>
+</config>

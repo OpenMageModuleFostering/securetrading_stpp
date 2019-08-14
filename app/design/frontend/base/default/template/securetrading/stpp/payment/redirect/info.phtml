@@ -1,0 +1,12 @@
+<?php print $this->getTitle(); ?>
+<?php if ($this->getPaymentType() || $this->getCcLast4()): ?>
+    <br /><br />
+    <ul>
+        <?php if ($this->getPaymentType()): ?>
+            <li>Payment Type: <?php print $this->getPaymentType(); ?></li>
+        <?php endif; ?>
+        <?php if ($this->getCcLast4()): ?>
+            <li>Last 4 Card Digits: <?php print $this->getCcLast4(); ?></li>
+        <?php endif; ?>
+    </ul>
+<?php endif; ?>

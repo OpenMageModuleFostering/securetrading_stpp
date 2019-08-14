@@ -1,0 +1,13 @@
+<?php print $this->getTitle(); ?>
+<br /><br />
+<ul>
+    <li>Payment Type: <?php print $this->getPaymentType(); ?></li>
+    <li>Last 4 Card Digits: <?php print $this->getCcLast4(); ?></li>
+    <?php if ($this->getStartDate()): ?>
+        <li>Start Date: <?php print $this->getStartDate(); ?></li>
+    <?php endif; ?>
+    <li>Expiry Date: <?php print $this->getExpiryDate(); ?></li>
+    <?php if ($this->getIssueNumber()): ?>
+        <li>Issue Number: <?php print $this->getIssueNumber(); ?></li>
+    <?php endif; ?>
+</ul>

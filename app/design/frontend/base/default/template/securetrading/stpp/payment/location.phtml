@@ -1,0 +1,12 @@
+<html>
+<head>
+    <title><?php print $this->__('Redirecting...'); ?></title>
+</head>
+<body>
+    <script type="text/javascript">
+    //<![CDATA[
+    window.top.location.href='<?php print $this->getRedirectUrl() ?>';
+    //]]>
+    </script>
+</body>
+</html>

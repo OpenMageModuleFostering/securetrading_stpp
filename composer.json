@@ -1,0 +1,16 @@
+{
+    "name": "OpenMageModuleFostering/Securetrading_Stpp",
+    "type": "magento-module",
+    "license": "GPL",
+    "homepage": "",
+    "description": "Integrates Magento with the SecureTrading STPP payment gateway.",
+    "authors": [
+    {
+        "name": "PeteST",
+        "email": "peter.barrow@securetrading.com"
+    }
+],
+    "suggest": {
+        "magento-hackathon/magento-composer-installer": "*"
+    }
+}

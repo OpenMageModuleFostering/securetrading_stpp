@@ -1,0 +1,42 @@
+<layout version="0.1.0">
+    <adminhtml_securetrading_transactions_index>
+        <reference name="content">
+            <block type="securetrading_stpp/adminhtml_sales_transactions" name="securetrading_stpp.adminhtml.sales.transactions" />
+        </reference>
+    </adminhtml_securetrading_transactions_index>
+    
+    <adminhtml_securetrading_transactions_single>
+        <reference name="content">
+            <block type="securetrading_stpp/adminhtml_sales_transactions_single" name="securetrading_stpp.adminhtml.sales.transactions.single" template="securetrading/stpp/sales/transactions/single.phtml">
+                <block type="securetrading_stpp/adminhtml_sales_transactions_data_request" name="securetrading_stpp.adminhtml.sales.transactions.data.request" as="request_data" />
+                <block type="securetrading_stpp/adminhtml_sales_transactions_data_response" name="securetrading_stpp.adminhtml.sales.transactions.data.response" as="response_data" />
+                <block type="securetrading_stpp/adminhtml_sales_transactions_children" name="securetrading_stpp.adminhtml.sales.transactions.children" as="child_transactions" />
+            </block>
+        </reference>
+    </adminhtml_securetrading_transactions_single>
+    
+    <adminhtml_sales_order_view>
+        <reference name="left">
+            <reference name="sales_order_tabs">
+                <block type="securetrading_stpp/adminhtml_sales_order_view_tab_modifier" name="tab_modifier" />
+            </reference>    
+        </reference>
+    </adminhtml_sales_order_view>
+    
+    <adminhtml_sales_order_create_securetrading_post>
+        <reference name="content">
+            <block type="securetrading_stpp/payment_redirect_post" name="securetrading_stpp.payment.redirect.post" template="securetrading/stpp/payment/redirect/post.phtml" output="toHtml" />
+        </reference>
+    </adminhtml_sales_order_create_securetrading_post>
+    
+    <adminhtml_sales_order_create_securetrading_raw>
+        <remove name="root" />
+        <block type="securetrading_stpp/payment_redirect_post" name="securetrading_stpp.payment.redirect.post" template="securetrading/stpp/payment/redirect/post.phtml" output="toHtml" />
+    </adminhtml_sales_order_create_securetrading_raw>
+    
+    <adminhtml_sales_order_create_securetrading_iframe>
+        <reference name="content">
+            <block type="securetrading_stpp/payment_iframe" name="securetrading_stpp.payment.iframe" as="iframe" template="securetrading/stpp/payment/iframe.phtml" />
+        </reference>
+    </adminhtml_sales_order_create_securetrading_iframe>
+</layout>

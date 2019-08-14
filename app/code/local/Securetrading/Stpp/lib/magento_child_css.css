@@ -1,0 +1,84 @@
+#head,
+#block-billing-details,
+#block-delivery-details,
+#block-order-details,
+#block-choice-order-details,
+#payment-logo,
+#threed-logo {
+	display: none;
+}
+
+* {
+	font-family: Arial,Helvetica,sans-serif;
+}
+
+body,
+#content,
+fieldset {
+	background: transparent;
+}
+
+fieldset {
+	margin-top: 0px;
+}
+
+#content {
+	min-height: 0px;
+	padding-bottom: 0px;
+}
+
+#content-internal {
+	width: 100%;
+	padding-top: 0px;
+}
+
+#block-message {
+	width: 100%;
+}
+
+li.message-changepaymentmethod {
+	background-color: #F5F4C6;
+	border-color: #DDDDDD;
+}
+
+fieldset {
+	border-width: 0px;/*: 0px solid #000;*/
+}
+
+#block-payment-details {
+	/*width: 100%;*/
+}
+
+#footer {
+	border-top-width: 0px;
+	text-align: center;
+}
+
+input.form-submit {
+	background-color: #FFAC47;
+	background-image: none;
+}
+
+#footer-internal {
+	width: 100%;
+}
+
+.submit-button {
+	padding-top: 10px;
+	clear: both;
+	display: inline;
+	float: left;
+}
+
+#submit {
+	position: static;
+	
+}
+
+.form-input {
+	margin: 0.4em 0;
+}
+
+.fieldlabel {
+	margin-bottom: 5px;
+}

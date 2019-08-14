@@ -1,0 +1,28 @@
+<config>
+    <menu>
+         <sales>
+             <children>
+                 <securetrading_transactions translate="title" module="securetrading_stpp">
+                     <title>ST Transactions</title>
+                     <action>adminhtml/securetrading_transactions/index</action>
+                     <sort_order>999</sort_order>
+                 </securetrading_transactions>
+             </children>
+         </sales>
+    </menu>
+    <acl>
+        <resources>
+            <admin>
+                <children>
+                    <sales>
+                        <children>
+                            <securetrading_transactions translate="title" module="securetrading_stpp">
+                                <title>ST Transactions</title>
+                            </securetrading_transactions>
+                        </children>
+                    </sales>
+                </children>
+            </admin>
+        </resources>
+    </acl>
+</config>

@@ -1,0 +1,14 @@
+<form action="<?php print $this->getRedirectUrl(); ?>" method="post" id="securetrading_stpp_direct_form">
+    <?php foreach($this->getRedirectData() as $k => $v): ?>
+        <input type="hidden" name="<?php print $k; ?>" value="<?php print $v; ?>" />
+    <?php endforeach; ?>
+    <input type="submit" value="Pay" />
+</form>
+<script type="text/javascript">
+    document.body.onload = function() { 
+        document.getElementById("securetrading_stpp_direct_form").submit();
+    };
+</script>
+<noscript>
+    <p>You are seeing this message because JavaScript is disabled.  Click "Pay" to continue with your transaction.</p>
+</noscript>

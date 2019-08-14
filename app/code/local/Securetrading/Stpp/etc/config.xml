@@ -1,0 +1,161 @@
+<?xml version="1.0"?>
+
+<config>
+    <modules>
+        <Securetrading_Stpp>
+            <version>3.0.0</version>
+        </Securetrading_Stpp>
+    </modules>
+    
+    <frontend>
+        <layout>
+            <updates>
+                <securetrading>
+                    <file module="Securetrading_Stpp">securetrading.xml</file>
+                </securetrading>
+            </updates>
+        </layout>
+        
+        <routers>
+            <securetrading_stpp>
+                <use>standard</use>
+                <args>
+                    <module>Securetrading_Stpp</module>
+                    <frontName>securetrading</frontName>
+                </args>
+            </securetrading_stpp>
+        </routers>
+    </frontend>
+
+    <adminhtml>
+        <layout>
+            <updates>
+                <securetrading>
+                    <file module="Securetrading_Stpp">securetrading.xml</file>
+                </securetrading>
+            </updates>
+        </layout>
+    </adminhtml>
+    
+    <admin>
+        <routers>
+            <adminhtml>
+                <args>
+                    <modules>
+                        <Securetrading_Stpp before="Mage_Adminhtml">Securetrading_Stpp</Securetrading_Stpp>
+                    </modules>
+                </args>
+            </adminhtml>
+        </routers>
+    </admin>
+    
+    <global>
+        <resources>
+            <securetrading_stpp>
+                <setup>
+                    <module>Securetrading_Stpp</module>
+                </setup>
+            </securetrading_stpp>
+        </resources>
+        <helpers>
+           <securetrading_stpp>
+                <class>Securetrading_Stpp_Helper</class>
+           </securetrading_stpp>
+        </helpers>
+        <blocks>
+            <securetrading_stpp>
+                <class>Securetrading_Stpp_Block</class>
+            </securetrading_stpp>
+        </blocks>
+        <models>
+            <securetrading_stpp>
+                <resourceModel>securetrading_stpp_resource</resourceModel>
+                <class>Securetrading_Stpp_Model</class>
+            </securetrading_stpp>
+            <securetrading_stpp_resource>
+                <class>Securetrading_Stpp_Model_Resource</class>
+                <entities>
+                    <requests>
+                        <table>securetrading_stpp_requests</table>
+                    </requests>
+                    <notifications>
+                        <table>securetrading_stpp_notifications</table>
+                    </notifications>
+                    <transactions>
+                        <table>securetrading_stpp_transactions</table>
+                    </transactions>
+                    <transaction_types>
+                        <table>securetrading_stpp_transaction_types</table>
+                    </transaction_types>
+                </entities>
+            </securetrading_stpp_resource>
+        </models>
+        <events>
+            <checkout_submit_all_after>
+                <observers>
+                    <securetrading_stpp>
+                        <class>Securetrading_Stpp_Model_Observer</class>
+                        <method>onCheckoutSubmitAllAfter</method>
+                    </securetrading_stpp>
+                </observers>
+            </checkout_submit_all_after>
+            <payment_info_block_prepare_specific_information>
+                <observers>
+                    <securetrading_stpp>
+                        <class>Securetrading_Stpp_Model_Observer</class>
+                        <method>onPaymentInfoBlockPrepareSpecificInformation</method>
+                    </securetrading_stpp>
+                </observers>
+            </payment_info_block_prepare_specific_information>
+        </events>
+    </global>
+    
+    <crontab>
+        <jobs>
+            <securetrading_stpp_abandoned_order_cleanup>
+                <schedule>
+                    <cron_expr>0 * * * *</cron_expr>
+                </schedule>
+                <run>
+                    <model>securetrading_stpp/cron::abandonedOrderCleanup</model>
+                </run>
+            </securetrading_stpp_abandoned_order_cleanup>
+            <securetrading_Stpp_Data_Request_table_cleanup>
+                <schedule>
+                    <cron_expr>0 * * * *</cron_expr>
+                </schedule>
+                <run>
+                    <model>securetrading_stpp/cron::requestTableCleanup</model>
+                </run>
+            </securetrading_Stpp_Data_Request_table_cleanup>
+        </jobs>
+    </crontab>
+    
+    <default>
+        <payment>
+            <securetrading_stpp_direct>
+                <model>securetrading_stpp/payment_direct</model>
+                <accepted_cards backend_model="securetrading_stpp/adminhtml_system_config_backend_multiselect" />
+                <stapi_alias backend_model="adminhtml/system_config_backend_encrypted" />
+                <stapi_host backend_model="adminhtml/system_config_backend_encrypted" />
+                <stapi_port backend_model="adminhtml/system_config_backend_encrypted" />
+                <ws_alias backend_model="adminhtml/system_config_backend_encrypted" />
+                <ws_username backend_model="adminhtml/system_config_backend_encrypted" />
+                <ws_password backend_model="adminhtml/system_config_backend_encrypted" />
+                <api_iframe_width>100%</api_iframe_width>
+                <api_iframe_height>600px</api_iframe_height>
+            </securetrading_stpp_direct>
+            <securetrading_stpp_redirect>
+                <model>securetrading_stpp/payment_redirect</model>
+                <site_security_password backend_model="adminhtml/system_config_backend_encrypted" />
+                <notification_password backend_model="adminhtml/system_config_backend_encrypted" />
+                <payment_action>authorize_capture</payment_action>
+                <ppg_use_iframe>1</ppg_use_iframe>
+                <ppg_iframe_width>100%</ppg_iframe_width>
+                <ppg_iframe_height>600px</ppg_iframe_height>
+                <parent_css>st.magentoiframeparent</parent_css>
+                <child_js>st.magentoiframechild</child_js>
+            </securetrading_stpp_redirect>
+        </payment>
+    </default>
+</config>

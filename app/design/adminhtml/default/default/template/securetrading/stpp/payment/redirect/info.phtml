@@ -1,0 +1,15 @@
+<b><?php print $this->getTitle(); ?></b>
+<br /><br />
+<ul>
+    <li>Account Type Description: <?php print $this->getAccountTypeDescription(); ?></li>
+    <li>Transaction Reference: <a href="<?php print $this->getTransactionReferenceUrl(); ?>"><?php print $this->getTransactionReference(); ?></a></li>
+    <li>Security Response Address: <span style="<?php print $this->getSecurityAddressStyle(); ?>"><?php print $this->getSecurityAddress(); ?></span></li>
+    <li>Security Response Postcode: <span style="<?php print $this->getSecurityPostcodeStyle(); ?>"><?php print $this->getSecurityPostcode(); ?></span></li>
+    <li>Security Response Security Code: <span style="<?php print $this->getSecurityCodeStyle(); ?>"><?php print $this->getSecurityCode(); ?></span></li>
+    <li>Payment Type: <?php print $this->getPaymentType(); ?></li>
+    <li>Last 4 Card Digits: <?php print $this->getCcLast4(); ?></li>
+    <li>3D Enrolled: <?php print $this->getEnrolled(); ?></li>
+    <li>3D Status: <?php print $this->getStatus(); ?></li>
+</ul>
+<a href="<?php print $this->getMystUrl(); ?>" target="_blank">View in MyST</a>
+<br /><br />
