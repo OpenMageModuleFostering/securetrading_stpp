@@ -3,10 +3,76 @@
 class Securetrading_Stpp_Model_Actions_Redirect extends Securetrading_Stpp_Model_Actions_Abstract implements Stpp_PaymentPages_ActionsInterface {
     protected $_updates = array();
     
+    protected function _getOrderIncrementIds(Stpp_Data_response $response) {
+    	$orderIncrementIdString = $response->get('order_increment_ids', '');
+    	
+    	if (!is_string($orderIncrementIdString)) {
+    		throw new Stpp_Exception(Mage::helper('securetrading_stpp')->__('The order increment IDs are not a string.'));
+    	}
+    	
+    	$orderIncrementIds = @unserialize($orderIncrementIdString);
+    	
+    	if (!is_array($orderIncrementIds) || empty($orderIncrementIds)) {
+    		throw new Stpp_Exception(Mage::helper('securetrading_stpp')->__('Invalid order increment IDs.'));
+    	}
+    	return $orderIncrementIds;
+    }
+    
     public function processAuth(Stpp_Data_Response $response) {
+    	$firstOrder = true;
+    	foreach($this->_getOrderIncrementIds($response) as $orderIncrementId) {
+    		$response->set('orderreference', $orderIncrementId);
+    		$this->_processAuth($response, $firstOrder);
+    		$firstOrder = false;
+    	}
+    	return $this->_isErrorCodeZero($response);
+    }
+    
+    public function process3dQuery(Stpp_Data_Response $response) {
+    	foreach($this->_getOrderIncrementIds($response) as $orderIncrementId) {
+    		$response->set('orderreference', $orderIncrementId);
+    		parent::process3dQuery($response);
+    	}
+    	return $this->_isErrorCodeZero($response);
+    }
+    
+    public function processRiskDecision(Stpp_Data_Response $response) {
+    	foreach($this->_getOrderIncrementIds($response) as $orderIncrementId) {
+    		$response->set('orderreference', $orderIncrementId);
+    		parent::processRiskDecision($response);
+    	}
+    	return $this->_isErrorCodeZero($response);
+    }
+    
+    public function processTransactionUpdate(Stpp_Data_Response $response) {
+    	foreach($this->_getOrderIncrementIds($response) as $orderIncrementId) {
+    		$response->set('orderreference', $orderIncrementId);
+    		parent::processTransactionUpdate($response);
+    	}
+    	return $this->_isErrorCodeZero($response);
+    }
+    
+    public function processRefund(Stpp_Data_Response $response) {
+    	foreach($this->_getOrderIncrementIds($response) as $orderIncrementId) {
+    		$response->set('orderreference', $orderIncrementId);
+    		parent::processRefund($response);
+    	}
+    	return $this->_isErrorCodeZero($response);
+    }
+    
+    public function processAccountCheck(Stpp_Data_Response $response) {
+    	foreach($this->_getOrderIncrementIds($response) as $orderIncrementId) {
+    		$response->set('orderreference', $orderIncrementId);
+    		parent::processAccountCheck($response);
+    	}
+    	return $this->_isErrorCodeZero($response);
+    }
+    
+   	public function _processAuth(Stpp_Data_Response $response, $firstOrder) {
         parent::processAuth($response);
         if ($response->get('errorcode') === '0') {
-            Mage::getModel('securetrading_stpp/payment_redirect')->registerSuccessfulOrderAfterExternalRedirect();
+			$emailConfirmation = $response->getRequest()->get('accounttypedescription') === 'MOTO' ? false : true;
+            Mage::getModel('securetrading_stpp/payment_redirect')->registerSuccessfulOrderAfterExternalRedirect($emailConfirmation);
         }
         
         $order = Mage::getModel('sales/order')->loadByIncrementId($response->get('orderreference'));
@@ -16,16 +82,19 @@ class Securetrading_Stpp_Model_Actions_Redirect extends Securetrading_Stpp_Model
         $payment->setCcLast4($payment->getMethodInstance()->getIntegration()->getCcLast4($response->get('maskedpan')));
         $payment->save();
         
-        $this->_updateOrder($response, $order);
-        
-        return $this->_isErrorCodeZero($response);
+        $this->_updateOrder($response, $order, $firstOrder);
     }
     
-    protected function _updateOrder(Stpp_Data_Response $response, Mage_Sales_Model_Order $order) {
-        $addresses = array(
-            'billing' => $order->getBillingAddress(),
-            'customer' => $order->getShippingAddress(),
-        );
+    protected function _updateOrder(Stpp_Data_Response $response, Mage_Sales_Model_Order $order, $firstOrder) {
+    	if ($firstOrder) {
+    		$addresses = array(
+    				'billing' => $order->getBillingAddress(),
+    				'customer' => $order->getShippingAddress(),
+    		);
+    	}
+    	else {
+    		$addresses = array('billing' => $order->getBillingAddress());
+    	}
        
         foreach($addresses as $stKeyPrefix => $address) {
             $this->_updateOneToOneMapping($response, $stKeyPrefix, $address);

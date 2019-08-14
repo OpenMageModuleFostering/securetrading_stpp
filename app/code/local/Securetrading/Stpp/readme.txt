@@ -145,8 +145,8 @@ DESTINATIONS
      customeremail
      enrolled
      errorcode
-     orderreference
      maskedpan
+     orderreference
      parenttransactionreference
      paymenttypedescription
      requesttypedescription
@@ -160,6 +160,7 @@ DESTINATIONS
   Custom Fields: (include the following custom fields)
      errordata
      errormessage
+     order_increment_ids
 
 5 - Click 'Save'.
 6 - Back on the main Notifications screen, in the first row of the existing notifications table select the newly created filter and destination from the two blank drop-down boxes.
@@ -189,6 +190,7 @@ Redirect Form 1:
 
   Custom Fields:
      storeid
+     order_increment_ids
 
   Accounttypedescription:
      ECOM
@@ -241,6 +243,7 @@ This feature can be enabled by following these steps:
      settleduedate
      orderreference
      accounttypedescription
+     order_increment_ids
      PASSWORD *
 
 * The last field, 'PASSWORD', is to be the combination of characters you entered into the 'Site Security Password'.
@@ -292,18 +295,27 @@ Incorrect notification configuration is recognised as an exception and also inse
 
 Log files should be monitored regularly.
 
-Cron
-----
-Two crons have been provided with the Secure Trading extension:
-* The first cron updates all orders that have been set to the 'Payment Pages' order status for more than 24 hours by setting them to 'Canceled'.  
-* The second cron performs maintenance by deleting unneeded records from the securetrading_stpp_requests database table.  
-
-In order to run the crons you must have set up a cron job according to http://www.magentocommerce.com/wiki/1_-_installation_and_configuration/how_to_setup_a_cron_job.
-
 Notification
 ------------
 
 If the customer changes any address fields on the Payment Pages the notification will update the address used for the order within Magento.
+
+Order Cancellation
+------------------
+
+Orders must be cancelled manually when they have been abandoned in the Payment Pages.  To determine which orders have been abandoned:
+
+1 - Head to the 'Sales' screen of the admin area.
+2 - Set the 'Status' filter to 'Payment Pages'.
+3 - Set the 'Purchased On' filter to two days ago.
+4 - Click 'Search'.
+
+The filtered orders can then be cancelled by doing the following:
+
+1 - Click 'Select Visible'.
+2 - Set 'Actions' to 'Cancel'.
+3 - Click 'Submit'.
+4 - Repeat until there are no filtered orders.  Set 'View' to '200' if you have a large number of orders.
 
 ------------
 3.1. Support

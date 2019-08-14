@@ -8,41 +8,59 @@
         </reference>
     </securetrading_stpp_payment>
     
-    
-    <securetrading_stpp_redirect_post_raw>
+    <securetrading_stpp_redirect_post_onepage_raw>
         <remove name="root" />
         <block type="securetrading_stpp/payment_redirect_post" name="securetrading_stpp.payment.redirect.post" template="securetrading/stpp/payment/redirect/post.phtml" output="toHtml" />
-    </securetrading_stpp_redirect_post_raw>
+    </securetrading_stpp_redirect_post_onepage_raw>
     
-     <securetrading_stpp_direct_post_raw>
-        <remove name="root" />
-        <block type="securetrading_stpp/payment_direct_post" name="securetrading_stpp.payment.direct.post" template="securetrading/stpp/payment/direct/post.phtml" output="toHtml" />
-    </securetrading_stpp_direct_post_raw>
+    <securetrading_stpp_redirect_post_onepage_iframe>
+        <update handle="securetrading_stpp_payment" />
+        <reference name="content">
+            <block type="securetrading_stpp/payment_iframe" name="securetrading_stpp.payment.iframe" as="iframe" template="securetrading/stpp/payment/iframe.phtml">
+                <action method="setSrcByRoute"><route>securetrading_stpp/redirect_post_onepage/raw</route></action>
+            </block>
+        </reference>
+    </securetrading_stpp_redirect_post_onepage_iframe>
     
-    
-    <securetrading_stpp_redirect_post_container>
+    <securetrading_stpp_redirect_post_onepage_container>
         <update handle="securetrading_stpp_payment" />
         <reference name="content">
             <block type="securetrading_stpp/payment_redirect_post" name="securetrading_stpp.payment.redirect.post" template="securetrading/stpp/payment/redirect/post.phtml" />
         </reference>
-    </securetrading_stpp_redirect_post_container>
-    
-    <securetrading_stpp_direct_post_container>
-        <update handle="securetrading_stpp_payment" />
-        <reference name="content"><!--TODO - does below block exist!? -->
-            <block type="securetrading_stpp/payment_direct_acs" name="securetrading_stpp.payment.direct.acs" template="securetrading/stpp/payment/direct/acs.phtml" />
-        </reference>
-    </securetrading_stpp_direct_post_container>
+    </securetrading_stpp_redirect_post_onepage_container>
     
     
-    <securetrading_stpp_redirect_post_iframe>
-        <update handle="securetrading_stpp_payment" />
+    
+    
+    <securetrading_stpp_redirect_post_multishipping_raw>
+        <remove name="root" />
+        <block type="securetrading_stpp/payment_redirect_post" name="securetrading_stpp.payment.redirect.post" template="securetrading/stpp/payment/redirect/post.phtml" output="toHtml" />
+    </securetrading_stpp_redirect_post_multishipping_raw>
+    
+     <securetrading_stpp_redirect_post_multishipping_iframe>
+        <update handle="checkout_multishipping" />
         <reference name="content">
             <block type="securetrading_stpp/payment_iframe" name="securetrading_stpp.payment.iframe" as="iframe" template="securetrading/stpp/payment/iframe.phtml">
-                <action method="setSrcByRoute"><route>securetrading_stpp/redirect_post/raw</route></action>
+                <action method="setSrcByRoute"><route>securetrading_stpp/redirect_post_multishipping/raw</route></action>
             </block>
         </reference>
-    </securetrading_stpp_redirect_post_iframe>
+    </securetrading_stpp_redirect_post_multishipping_iframe>
+    
+    <securetrading_stpp_redirect_post_multishipping_container>
+    	<update handle="checkout_multishipping" />
+        <reference name="content">
+        	<block type="securetrading_stpp/payment_redirect_post" name="securetrading_stpp.payment.redirect.post" template="securetrading/stpp/payment/redirect/post.phtml" />
+        </reference>
+    </securetrading_stpp_redirect_post_multishipping_container>
+    
+    
+    
+    
+    
+    <securetrading_stpp_direct_post_raw>
+        <remove name="root" />
+        <block type="securetrading_stpp/payment_direct_post" name="securetrading_stpp.payment.direct.post" template="securetrading/stpp/payment/direct/post.phtml" output="toHtml" />
+    </securetrading_stpp_direct_post_raw>
     
     <securetrading_stpp_direct_post_iframe>
         <update handle="securetrading_stpp_payment" />
@@ -52,6 +70,13 @@
             </block>
         </reference>
     </securetrading_stpp_direct_post_iframe>
+    
+    <securetrading_stpp_direct_post_container>
+        <update handle="securetrading_stpp_payment" />
+        <reference name="content"><!--TODO - does below block exist!? -->
+            <block type="securetrading_stpp/payment_direct_acs" name="securetrading_stpp.payment.direct.acs" template="securetrading/stpp/payment/direct/acs.phtml" />
+        </reference>
+    </securetrading_stpp_direct_post_container>
     
     
     

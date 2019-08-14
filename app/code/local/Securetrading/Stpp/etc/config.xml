@@ -3,7 +3,7 @@
 <config>
     <modules>
         <Securetrading_Stpp>
-            <version>3.0.0</version>
+            <version>3.1.0</version>
         </Securetrading_Stpp>
     </modules>
     
@@ -24,6 +24,13 @@
                     <frontName>securetrading</frontName>
                 </args>
             </securetrading_stpp>
+            <checkout>
+            	<args>
+	            	<modules>
+	            		<Securetrading_Stpp before="Mage_Checkout">Securetrading_Stpp</Securetrading_Stpp>
+	            	</modules>
+            	</args>
+            </checkout>
         </routers>
     </frontend>
 
@@ -107,9 +114,17 @@
                     </securetrading_stpp>
                 </observers>
             </payment_info_block_prepare_specific_information>
+			<checkout_type_multishipping_create_orders_single>
+              <observers>
+                <securetrading_stpp>
+                  <class>Securetrading_Stpp_Model_Observer</class>
+                  <method>onCheckoutTypeMultishippingCreateOrdersSingle</method>
+                </securetrading_stpp>
+              </observers>
+            </checkout_type_multishipping_create_orders_single>
         </events>
     </global>
-    
+    <!--
     <crontab>
         <jobs>
             <securetrading_stpp_abandoned_order_cleanup>
@@ -130,7 +145,7 @@
             </securetrading_Stpp_Data_Request_table_cleanup>
         </jobs>
     </crontab>
-    
+    -->
     <default>
         <payment>
             <securetrading_stpp_direct>

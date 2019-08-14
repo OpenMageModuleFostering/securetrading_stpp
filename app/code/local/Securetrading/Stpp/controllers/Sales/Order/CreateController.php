@@ -25,13 +25,7 @@ class Securetrading_Stpp_Sales_Order_CreateController extends Mage_Adminhtml_Sal
 
             // Start ST added.
             $this->_getSession()->setLastOrderIncrementId($order->getIncrementId());
-            
-            if (Mage::getModel('securetrading_stpp/payment_redirect')->getConfigData('ppg_use_iframe')) {
-                $path = '*/sales_order_create_securetrading/iframe';
-            }
-            else {
-                $path = '*/sales_order_create_securetrading/post';
-            }
+            $path = Mage::getModel('securetrading_stpp/payment_redirect')->getMotoOrderRedirectPath();
             $this->_redirect($path, array('order_increment_id' => $order->getIncrementId()));
             return;
             // end ST added.

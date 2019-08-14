@@ -84,8 +84,8 @@ class Securetrading_Stpp_Model_Payment_Direct extends Securetrading_Stpp_Model_P
         return $this;
     }
     
-    public function prepareOrderData(Mage_Sales_Model_Order_Payment $payment) {
-        $data = parent::prepareOrderData($payment);
+    public function prepareOrderData(Mage_Sales_Model_Order_Payment $payment, array $orderIncrementIds) {//TODO - the api module must pass this new 2nd param through
+        $data = parent::prepareOrderData($payment, $orderIncrementIds);
         $payment = $this->getInfoInstance();
         
         return $data += array(
@@ -130,7 +130,7 @@ class Securetrading_Stpp_Model_Payment_Direct extends Securetrading_Stpp_Model_P
         return false;
     }
     
-    public function handleSuccessfulPayment(Mage_Sales_Model_Order $order) {
+    public function handleSuccessfulPayment(Mage_Sales_Model_Order $order, $emailConfirmation = true) {
         parent::handleSuccessfulPayment($order);
         Mage::getSingleton('securetrading_stpp/payment_direct_session')->clear();
     }

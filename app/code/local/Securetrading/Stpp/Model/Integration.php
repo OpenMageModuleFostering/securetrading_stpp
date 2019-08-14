@@ -54,6 +54,7 @@ class Securetrading_Stpp_Model_Integration extends Mage_Core_Model_Abstract {
                             'password'                      => $paymentMethod->getConfigData('site_security_password'),
                             'algorithm'                     => 'sha256',
                             'use'                           => $paymentMethod->getConfigData('use_site_security'),
+                        	'fields'						=> array('order_increment_ids'),
                         ),
                         'use_authenticated_moto'            => false,
                         'use_http_post'                     => true,

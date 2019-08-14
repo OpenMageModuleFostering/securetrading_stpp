@@ -92,14 +92,16 @@ class Stpp_Data_Request extends Stpp_Data_Abstract {
     }
     
     protected function _setBillingtelephonetype($type) {
-        if ($this->has('billingtelephone')) {
+        $billingTelephone = $this->get('billingtelephone', '');
+		if (!empty($billingTelephone)) {
             $this->_validateTelType($type);
         }
         $this->_set('billingtelephonetype', $type);
     }
     
     protected function _setCustomertelephonetype($type) {
-        if ($this->has('customertelephone')) {
+        $customerTelephone = $this->get('customertelephone', '');
+		if (!empty($customerTelephone)) {
             $this->_validateTelType($type);
         }
         $this->_set('customertelephonetype', $type);

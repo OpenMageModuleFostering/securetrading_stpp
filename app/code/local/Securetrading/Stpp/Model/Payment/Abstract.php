@@ -28,7 +28,7 @@ abstract class Securetrading_Stpp_Model_Payment_Abstract extends Mage_Payment_Mo
         return $this;
     }
     
-    public function prepareOrderData(Mage_Sales_Model_Order_Payment $payment) {
+    public function prepareOrderData(Mage_Sales_Model_Order_Payment $payment, array $orderIncrementIds) {
         $order = $payment->getOrder();
         $billingAddress = $order->getBillingAddress();
         $billingCounty = $billingAddress->getCountry() == 'US' ? $billingAddress->getRegionCode() : $billingAddress->getRegion();
@@ -38,10 +38,16 @@ abstract class Securetrading_Stpp_Model_Payment_Abstract extends Mage_Payment_Mo
         $customerDobArray = explode(' ', $customerDobFull);
         $customerDob = $customerDobArray[0];
         
+        $baseTotalDue = 0;
+        
+        foreach($orderIncrementIds as $orderIncrementId) {
+        	$baseTotalDue += Mage::getModel('sales/order')->loadByIncrementId($orderIncrementId)->getBaseTotalDue();
+        }
+        
         $data = array(
             'sitereference'             => $this->getConfigData("site_reference"),
             'currencyiso3a'             => $order->getBaseCurrencyCode(),
-            'mainamount'                => $order->getBaseTotalDue(),
+            'mainamount'				=> $baseTotalDue,
             
             'billingprefixname'         => $billingAddress->getPrefix(),
             'billingfirstname'          => $billingAddress->getFirstname(),
@@ -90,14 +96,14 @@ abstract class Securetrading_Stpp_Model_Payment_Abstract extends Mage_Payment_Mo
         return $data;
     }
     
-    public function registerSuccessfulOrderAfterExternalRedirect() {
+    public function registerSuccessfulOrderAfterExternalRedirect($emailConfirmation = true) {
         $this->log(sprintf('In %s.', __METHOD__));
         $stateObject = Mage::getSingleton('securetrading_stpp/transport');
         $order = Mage::getModel('sales/order')->loadByIncrementId($stateObject->getOrderReference());
-        $this->handleSuccessfulPayment($order);
+        $this->handleSuccessfulPayment($order, $emailConfirmation);
     }
     
-    public function handleSuccessfulPayment(Mage_Sales_Model_Order $order) {
+    public function handleSuccessfulPayment(Mage_Sales_Model_Order $order, $emailConfirmation = true) {
         $this->log(sprintf('In %s.', __METHOD__));
         $quote = Mage::getModel('sales/quote')->loadByIdWithoutStore($order->getQuoteId());
         $stateObject = Mage::getSingleton('securetrading_stpp/transport');
@@ -118,5 +124,9 @@ abstract class Securetrading_Stpp_Model_Payment_Abstract extends Mage_Payment_Mo
             ->setCcLast4($this->getIntegration()->getCcLast4($stateObject->getMaskedPan()))
             ->save()
         ;
+		
+		if ($emailConfirmation) {
+           $order->sendNewOrderEmail()->save(); // Send last - even if notif times out order status updated etc.  and payment information updated.
+        }
     }
 }

@@ -15,7 +15,7 @@ class Securetrading_Stpp_Direct_PostController extends Mage_Core_Controller_Fron
     }
     
     public function rawAction() {
-        $this->loadLayout();;
+        $this->loadLayout();
         $this->renderLayout();
     }
     

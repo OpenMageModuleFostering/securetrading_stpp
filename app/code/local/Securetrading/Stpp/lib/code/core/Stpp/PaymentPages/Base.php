@@ -223,7 +223,7 @@ class Stpp_PaymentPages_Base extends Stpp_Component_Abstract implements Stpp_Pay
             $notificationHash = $this->_createNotificationHash();
             
             if($_POST['responsesitesecurity'] !== $notificationHash) {
-                throw new Stpp_Exception(sprintf($this->__("The notification hashes did not match: %s !== %s."), $_POST['responsesitesecurity'], $notificationHash));
+               	throw new Stpp_Exception(sprintf($this->__("The notification hashes did not match: %s !== %s."), $_POST['responsesitesecurity'], $notificationHash));
             }
         }
         
