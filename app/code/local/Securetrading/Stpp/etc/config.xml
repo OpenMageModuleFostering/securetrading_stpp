@@ -193,6 +193,7 @@
     <default>
         <payment>
 	    <securetrading_stpp_direct>
+	        <title>Secure Trading API</title>
 		<model>securetrading_stpp/payment_direct</model>
 		<payment_action>authorize_capture</payment_action>
                 <accepted_cards backend_model="securetrading_stpp/adminhtml_system_config_backend_multiselect" />
@@ -234,6 +235,7 @@
 		-->
             </securetrading_stpp_tokenization>
             <securetrading_stpp_redirect>
+	        <title>Secure Trading Redirect</title>
                 <model>securetrading_stpp/payment_redirect</model>
                 <site_security_password backend_model="adminhtml/system_config_backend_encrypted" />
                 <notification_password backend_model="adminhtml/system_config_backend_encrypted" />

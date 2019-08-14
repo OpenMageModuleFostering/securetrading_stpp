@@ -31,7 +31,7 @@ class Securetrading_Stpp_RedirectController extends Mage_Core_Controller_Front_A
       }
     }
     else {
-      Mage::getSingleton('checkout/session')->addError(sprintf(Mage::helper('securetrading_stpp')->__('These order(s) were not processed successfully: %s'), implode(', ', $this->_getOrderIncrementIds())));
+      Mage::getSingleton('checkout/session')->addError(sprintf(Mage::helper('securetrading_stpp')->__('There has been a problem with the payment of your order(s): %s.  Please contact us to confirm the status of your order before attempting to place it again.'), implode(', ', $this->_getOrderIncrementIds())));
       $path = 'checkout/cart';
     }
     
