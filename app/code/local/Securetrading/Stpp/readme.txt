@@ -40,8 +40,8 @@ Basic Configuration
   Enabled : This controls if the extension is enabled or not.
   Title : This is the title of the extension when shown on the storefront.
   Description : This is the description of the extension when shown on the storefront
-  Applicable Countries : This allows the extension to be enabled for ALL countries or specific countires as required.
-  Specific Countires : If applicable countries is set to "specific countries" this is the list of allowed countires.
+  Applicable Countries : This allows the extension to be enabled for ALL countries or specific countries as required.
+  Specific Countires : If applicable countries is set to "specific countries" this is the list of allowed countries.
   Use Iframe : Controls if an iframe is used to display the payment page
   Iframe Height : If the iframe is enabled this controls the height of the iframe.
   Iframe Width : If the iframe is enabled this controls the width of the iframe.
@@ -58,14 +58,14 @@ Gateway Configuration
   Parent JS : The Parent JS file to use when displaying the payment page.
   Child JS : The Child JS file to use when displaying the payment page.
   Payment Action : * Currently only "Authorize and Capture" is supported (see section 3.2 for more information). When set to Authorise & Capture settlestatus 0 is sent to Secure Trading and the payment will be scheduled for settlement in the next available run.
-  Settle Due Date: The settle due date is the day that Secure Trading will schedule to the payment to be included in the next available settlement run.
+  Settle Due Date: The settle due date is the day that Secure Trading will schedule the payment to be included in the next available settlement run.
   Settle Status : This is the settle status that will be applied to this transaction.  This should normally be set to 0.
 
 ------------------
 2.2. Notification
 ------------------
 
-Notification are responsible for updating order information in the Magento back-end after payment has been completed.
+Notifications are responsible for updating order information in the Magento back-end after payment has been completed.
 
 You must set-up a notification using MyST - for more information about MyST please see http://www.securetrading.com/support/document/category/myst/
 
@@ -93,7 +93,7 @@ FILTERS:
      70000 - decline transactions
 
 NOTE: Notifications can be sent for errorcodes other than 0 or 70000: e.g. for unauthenticated 3-D Secure payments.  
-      If you wish to be sent errorcodes other than 0 or 70000 please contact the Secure Trading Support team (support@securetrading.com)  
+      If you wish to be informed of errorcodes other than 0 or 70000 please contact the Secure Trading Support team (support@securetrading.com).
 
 3 - Click 'Save'.
 
@@ -114,7 +114,7 @@ DESTINATIONS
     <your_root_magento_install_here>/index.php/securetrading/redirect/notification
 
   Security Password:
-     This value of this field is included in the notification security hash which can be used to verify the request has not been modified.
+     The value of this field is included in the notification security hash which can be used to verify the request has not been modified.
 
   Security Algorithm:
      sha256 (algorithm used for generating the notification hash)
@@ -228,7 +228,7 @@ This feature can be enabled by following these steps:
 2 - Hover over 'System' and then click 'Configuration'.
 3 - Select 'Payment Methods' on the left-hand menu.
 4 - Click on 'SecureTrading STPP'.
-5 - Click on 'Configure' to the right of 'SecureTraidng Payment Pages'.
+5 - Click on 'Configure' to the right of 'SecureTrading Payment Pages'.
 6 - Click on 'Configure' to the right of 'Gateway Configuration'.
 7 - Set 'Use Site Security' to 'Yes'.
 8 - Enter a hard to guess combination of letters and numbers into the 'Site Security Password' field.  This combination should be at least 8 characters long.
@@ -262,7 +262,9 @@ You will also have to enter the same password into the Secure Trading Magento ex
 2.6. Iframe support
 --------------------
 
-By default the module uses iframes to redirect customers to the Payment Pages.  If you wish to disable iframes delete the text inside the 'Parent CSS' and 'Child JS' configuration options (see section 2.1).
+By default the module uses iframes to redirect customers to the Payment Pages.
+
+If you wish to disable iframes set 'Use Iframes' to 'No' in the module configuration (see section 2.1).  Also delete the text inside the 'Parent CSS' and 'Child JS' configuration options (see section 2.1).
 
 -----------------------
 2.7. Expected Behaviour
@@ -271,7 +273,7 @@ By default the module uses iframes to redirect customers to the Payment Pages.  
 Order status
 ------------
 * When a customer is transferred from the Magento store to the Secure Trading Payment Pages the Magento order status will be "Payment Pages".
-* When a notification is sent from Secure Trading to the Magento store for a successful (errorcode 0) transaction the Magento order status will be "Captured".
+* When a notification is sent from Secure Trading to the Magento store for a successful (errorcode 0) transaction the Magento order status will be "Processing".
 * If Secure Trading return a suspended response for a transaction the Magento order status will be "Suspended" - these transactions should manually be reviewed and updated using the "Approve" or "Denied" buttons within Magento. They will also need to be updated using MyST.
 
 * When a payment attempt fails at the Payment Pages the attempt will be logged in the order history that is visible to administrators.
@@ -297,6 +299,11 @@ Two crons have been provided with the Secure Trading extension:
 * The second cron performs maintenance by deleting unneeded records from the securetrading_stpp_requests database table.  
 
 In order to run the crons you must have set up a cron job according to http://www.magentocommerce.com/wiki/1_-_installation_and_configuration/how_to_setup_a_cron_job.
+
+Notification
+------------
+
+If the customer changes any address fields on the Payment Pages the notification will update the address used for the order within Magento.
 
 ------------
 3.1. Support

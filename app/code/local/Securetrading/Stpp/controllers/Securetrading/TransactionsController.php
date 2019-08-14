@@ -10,6 +10,11 @@ class Securetrading_Stpp_Securetrading_TransactionsController extends Mage_Admin
         $this->renderlayout();
     }
     
+    public function gridAction() {
+        $this->loadLayout(false);
+        $this->renderLayout();
+    }
+    
     public function singleAction() {
         $tid = $this->getRequest()->getParam('transaction_id');
         $transaction = Mage::getModel('securetrading_stpp/transaction')->load($tid);

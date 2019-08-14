@@ -119,6 +119,30 @@ class Stpp_Data_Request extends Stpp_Data_Abstract {
         $this->_set('customershippingmethod', $customerShippingMethod);
     }
     
+    protected function _setParentcss($fileName) {
+        if ($fileName) {
+            $this->_set('parentcss', $fileName);
+        }
+    }
+    
+    protected function _setChildcss($fileName) {
+        if ($fileName) {
+            $this->_set('childcss', $fileName);
+        }
+    }
+    
+    protected function _setParentjs($fileName) {
+        if ($fileName) {
+            $this->_set('parentjs', $fileName);
+        }
+    }
+    
+    protected function _setChildjs($fileName) {
+        if ($fileName) {
+            $this->_set('childjs', $fileName);
+        }
+    }
+    
     protected  function _validateTelType($type) {
         if (!in_array($type, Stpp_Types::getTelTypes())) {
             throw new Stpp_Exception(sprintf($this->__('Invalid telephone type provided: "%s".'), $type));

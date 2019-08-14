@@ -7,10 +7,9 @@ class Securetrading_Stpp_RedirectController extends Mage_Core_Controller_Front_A
             ->runRedirect();
         
         $path = 'checkout/onepage/success';
-        $arguments = array();
+        $arguments = array('_nosid' => true);
         
         $storeId = $this->getRequest()->get('storeid');
-        
         $queryArgs = array('url' => Mage::getModel('core/url')->setStore($storeId)->getUrl($path, $arguments));
         $this->_redirect('securetrading/payment/location', array('_query' => $queryArgs));
     }

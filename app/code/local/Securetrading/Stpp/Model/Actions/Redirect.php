@@ -87,8 +87,12 @@ class Securetrading_Stpp_Model_Actions_Redirect extends Securetrading_Stpp_Model
     protected function _updateCountry(Stpp_Data_Response $response, $stKeyPrefix, $address) {
         $stCountryKey = $stKeyPrefix . 'countryiso2a';
         $addressCountryId = $address->getCountryId();
+        $countryString = $response->get($stCountryKey);
+        $stCountryId = '';
         
-        $stCountryId = Mage::getModel('directory/country')->loadByCode($response->get($stCountryKey))->getId();
+        if (in_array(strlen($countryString), array(2, 3))) {
+            $stCountryId = Mage::getModel('directory/country')->loadByCode($response->get($stCountryKey))->getId();
+        }
         if ($addressCountryId !== (string) $stCountryId) {
             $address->setCountryId($stCountryId);
             $this->_updates[] = $stCountryKey;

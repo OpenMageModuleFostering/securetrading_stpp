@@ -5,6 +5,10 @@
         </reference>
     </adminhtml_securetrading_transactions_index>
     
+    <adminhtml_securetrading_transactions_grid>
+            <block type="securetrading_stpp/adminhtml_sales_transactions_grid" name="securetrading_stpp.adminhtml.sales.transactions.grid" output="toHtml" />
+    </adminhtml_securetrading_transactions_grid>
+    
     <adminhtml_securetrading_transactions_single>
         <reference name="content">
             <block type="securetrading_stpp/adminhtml_sales_transactions_single" name="securetrading_stpp.adminhtml.sales.transactions.single" template="securetrading/stpp/sales/transactions/single.phtml">

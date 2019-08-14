@@ -7,7 +7,7 @@ abstract class Securetrading_Stpp_Block_Payment_Info_Abstract extends Mage_Payme
     
     public function getSpecific($key, $default = null) {
         $specific = $this->getSpecificInformation();
-        if (array_key_exists($key, $specific) && !empty($specific[$key])) {
+        if (array_key_exists($key, $specific)) {
             return $specific[$key];
         }
         return $default;

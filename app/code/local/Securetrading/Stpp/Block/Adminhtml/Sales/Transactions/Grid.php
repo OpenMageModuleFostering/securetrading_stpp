@@ -9,6 +9,7 @@ class Securetrading_Stpp_Block_Adminhtml_Sales_Transactions_Grid extends Mage_Ad
         $this->setDefaultDir('DESC');
         $this->setSaveParametersInSession(true);
     }
+    
     protected function _prepareCollection() {
         $collection = Mage::getResourceModel('securetrading_stpp/transaction_collection');
         
@@ -57,6 +58,10 @@ class Securetrading_Stpp_Block_Adminhtml_Sales_Transactions_Grid extends Mage_Ad
             'index'     => 'last_updated_at',
             'type'      => 'datetime',
         ));
+    }
+    
+    public function getGridUrl() {
+        return $this->getUrl('*/*/grid', array('_current' => true));
     }
     
     public function getRowUrl($item) {

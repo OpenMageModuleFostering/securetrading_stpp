@@ -2,10 +2,10 @@
     <?php foreach($this->getRedirectData() as $k => $v): ?>
         <?php if ($k == 'requesttypedescriptions'): ?>
             <?php foreach($v as $requestTypeDescription): ?>
-                <input type="hidden" name="requesttypedescriptions" value="<?php print htmlentities($requestTypeDescription, ENT_QUOTES); ?>" />
+                <input type="hidden" name="requesttypedescriptions" value="<?php print Mage::helper('core')->escapeHtml($requestTypeDescription); ?>" />
             <?php endforeach; ?>
         <?php else: ?>
-            <input type="hidden" name="<?php print $k; ?>" value="<?php print htmlentities($v, ENT_QUOTES); ?>" />
+            <input type="hidden" name="<?php print $k; ?>" value="<?php print Mage::helper('core')->escapeHtml($v); ?>" />
         <?php endif; ?>
     <?php endforeach; ?>
     <input type="submit" value="Pay" />

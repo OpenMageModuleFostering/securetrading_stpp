@@ -49,7 +49,7 @@ class Securetrading_Stpp_Model_Observer {
         
         foreach($data as $key) {
             $transport = $observer->getEvent()->getTransport();
-            $value = $payment->getAdditionalInformation($key) ?: '';
+            $value = $payment->getAdditionalInformation($key);
             $transport->setData($key, $value);
         }
         
