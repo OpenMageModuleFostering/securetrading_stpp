@@ -1,7 +1,7 @@
 <?php
 
 class Stpp_Api_Base extends Stpp_Component_Abstract implements Stpp_Api_BaseInterface {
-    const INTERFACE_NAME = 'SecureTrading API';
+    const INTERFACE_NAME = 'Secure Trading API';
     
     public static function getName() {
         return static::INTERFACE_NAME;

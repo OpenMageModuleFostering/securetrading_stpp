@@ -23,6 +23,7 @@
             <input type="text" name="payment[securetrading_stpp_card_number]" id="<?php print $_code; ?>_card_number" class="required-entry" />
         </div>
     </li>
+    <?php if ($this->canShowStartDate()): ?>
     <li>
         <label for="<?php print $_code; ?>_start_date_month">
             <?php print $this->getCardStartDateLabel(); ?>
@@ -40,6 +41,7 @@
             </select>
         </div>
     </li>
+    <?php endif; ?>
     <li>
         <label for="<?php print $_code; ?>_expiry_date_month">
             <?php print $this->getCardExpiryDateLabel(); ?>
@@ -66,7 +68,9 @@
         <div class="input-box">
             <input type="text" name="payment[securetrading_stpp_security_code]" id="<?php print $_code; ?>_security_code" class="required-entry" maxlength="4" />
         </div>
-
+	</li>
+	<?php if ($this->canShowIssueNumber()): ?>
+	<li>
         <label for="<?php print $_code; ?>_issue_number">
             <?php print $this->getCardIssueNumberLabel(); ?>
         </label>
@@ -74,4 +78,5 @@
             <input type="text" name="payment[securetrading_stpp_issue_number]" id="<?php print $_code; ?>_issue_number" />
         </div>
     </li>
+    <?php endif; ?>
 </ul>

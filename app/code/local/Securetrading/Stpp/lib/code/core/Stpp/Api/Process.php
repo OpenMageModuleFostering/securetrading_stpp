@@ -5,9 +5,21 @@ class Stpp_Api_Process extends Stpp_Component_Abstract implements Stpp_Api_Proce
     
     protected $_context;
     
+    protected $_calculationObjects;
+    
     protected $_result;
     
     protected $_apiLog;
+    
+    public function __construct() {
+    	parent::__construct();
+    	$this->setCalculationObjects(array(
+			'stpp_actions_abstract_cardstore_with_noncardstore' => new Stpp_Api_Process_Calculation_CardstoreNoncardstoreCombined(),
+			'stpp_actions_abstract_riskdec_with_nonriskdec' => new Stpp_Api_Process_Calculation_RiskdecNonriskdecCombined(),
+			'stpp_actions_abstract_tu_refund_combined' => new Stpp_Api_Process_Calculation_TuRefundCombined(),
+ 			'stpp_actions_abstract_default' => new Stpp_Api_Process_Calculation_Default(),
+    	));
+    }
     
     public function setActionInstance(Stpp_Api_ActionsInterface $actionInstance) {
         $this->_actionInstance = $actionInstance;
@@ -38,6 +50,22 @@ class Stpp_Api_Process extends Stpp_Component_Abstract implements Stpp_Api_Proce
         return $this;
     }
     
+    public function addCalculationObject($code, Stpp_Api_Process_Calculation_BaseInterface $calculationObject) {
+    	$this->_calculationObjects[$code] = $calculationObject;
+    }
+    
+    public function removeCalculationObject($code) {
+    	unset($this->_calculationObjects);
+    }
+    
+    public function getCalculationObjects() {
+    	return $this->_calculationObjects;
+    }
+    
+    public function setCalculationObjects(array $objects = array()) {
+    	$this->_calculationObjects = $objects;
+    }
+    
     protected function _getResult() {
         if ($this->_result === null) {
             throw new Stpp_Exception($this->__('The result object is null.'));
@@ -52,16 +80,14 @@ class Stpp_Api_Process extends Stpp_Component_Abstract implements Stpp_Api_Proce
     
     public function getApiLog() {
         if ($this->_apiLog === null) {
-            throw new Stpp_Exception($this->__('The api log has not been set.'));
+            throw new Stpp_Exception($this->__('The API log has not been set.'));
         }
         return $this->_apiLog;
     }
 
     protected function _init(Stpp_Api_ContextInterface $context) {
-    	$result = $this->_getResult();
-    	$result->setContext($context);
+    	$this->_getResult()->setContext($context);
     	$this->_setContext($context);
-    	$this->_getActionInstance()->setResult($result);
     }
     
     public function run(Stpp_Api_ContextInterface $context) {
@@ -116,7 +142,7 @@ class Stpp_Api_Process extends Stpp_Component_Abstract implements Stpp_Api_Proce
     
     protected function _runCommonRoutines($responses) {
         foreach($responses as $response) {
-	    $this->getApiLog()->log($response);
+	    	$this->getApiLog()->log($response);
             $this->_formatErrorMessages($response);
         }
         return $this;
@@ -146,7 +172,7 @@ class Stpp_Api_Process extends Stpp_Component_Abstract implements Stpp_Api_Proce
     
     protected function _calculateIsTransactionSuccessful() {
     	$result = null;
-    	$calculationObjects = $this->_getActionInstance()->getCalculationObjects();
+    	$calculationObjects = $this->getCalculationObjects();
     	 
     	while ($object = array_shift($calculationObjects)) {
     		if (($result = $object->calculate($this->_getContext())) !== null) {
@@ -159,7 +185,23 @@ class Stpp_Api_Process extends Stpp_Component_Abstract implements Stpp_Api_Proce
     }
     
     protected function _calculateMessages() {
-    	$this->_getActionInstance()->prepareMessages();
+		$result = $this->_getResult();
+		$responses = $result->getContext()->getResponses();
+		
+		foreach($responses as $response) {
+			$errorMessages = array();
+			$successMessages = array();
+	
+			if ($response->getMessageIsError()) {
+				$errorMessages[] = $response->getMessage();
+			}
+			else {
+				$successMessages[] = $response->getMessage();
+			}
+		}
+		 
+		$result->setErrorMessage(implode(' - ', $errorMessages));
+		$result->setSuccessMessage(implode(' - ', $successMessages));
     }
     
     protected function _handleError(Stpp_Data_Response $response) {

@@ -78,4 +78,12 @@ class Securetrading_Stpp_Block_Payment_Direct_Form extends Mage_Payment_Block_Fo
     public function getCardIssueNumberDescription() {
         return $this->_getIntegration()->getCardIssueNumberDescription();
     }
+    
+    public function canShowStartDate() {
+    	return (bool) $this->getMethod()->getConfigData('show_start_date');
+    }
+    
+    public function canShowIssueNumber() {
+    	return (bool) $this->getMethod()->getConfigData('show_issue_number');
+    }
 }

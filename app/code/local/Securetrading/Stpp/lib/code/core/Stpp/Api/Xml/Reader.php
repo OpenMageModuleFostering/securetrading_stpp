@@ -132,7 +132,7 @@ class Stpp_Api_Xml_Reader extends Stpp_Component_Abstract implements Stpp_Api_Xm
         
         $response->set('acsurl', (string) $xmlResponse->threedsecure->acsurl);
         $response->set('cavv', (string) $xmlResponse->threedsecure->cavv);
-        $response->set('3dstatus', (string) $xmlResponse->threedsecure->status);
+        $response->set('status', (string) $xmlResponse->threedsecure->status);
         $response->set('xid', (string) $xmlResponse->threedsecure->xid);
         $response->set('eci', (string) $xmlResponse->threedsecure->eci);
         $response->set('enrolled', (string) $xmlResponse->threedsecure->enrolled);

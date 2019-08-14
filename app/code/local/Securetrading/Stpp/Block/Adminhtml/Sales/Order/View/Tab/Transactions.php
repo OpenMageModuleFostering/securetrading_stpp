@@ -5,11 +5,11 @@ class Securetrading_Stpp_Block_Adminhtml_Sales_Order_View_Tab_Transactions
     implements Mage_Adminhtml_Block_Widget_Tab_Interface
 {
     public function getTabLabel() {
-        return Mage::helper('securetrading_stpp')->__('SecureTrading Transactions');
+        return Mage::helper('securetrading_stpp')->__('Secure Trading Transactions');
     }
     
     public function getTabTitle() {
-        return Mage::helper('securetrading_stpp')->__('SecureTrading Transactions');
+        return Mage::helper('securetrading_stpp')->__('Secure Trading Transactions');
     }
     
     public function isHidden() {

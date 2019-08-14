@@ -4,7 +4,7 @@ class Securetrading_Stpp_Securetrading_TransactionsController extends Mage_Admin
     public function indexAction() {
         $this
             ->_title($this->__('Sales'))
-            ->_title($this->__('SecureTrading Transactions')); 
+            ->_title($this->__('Secure Trading Transactions')); 
         
         $this->loadLayout()->_setActiveMenu('sales/securetrading_transactions');
         $this->renderlayout();
@@ -25,7 +25,7 @@ class Securetrading_Stpp_Securetrading_TransactionsController extends Mage_Admin
         
         $this
             ->_title($this->__('Sales'))
-            ->_title($this->__('SecureTrading Transactions'))
+            ->_title($this->__('Secure Trading Transactions'))
             ->_title('#' . $transaction->getTransactionId() . ' (' . $tRef . ')');
                 
         $this->loadLayout()->_setActiveMenu('sales/securetrading_transactions');

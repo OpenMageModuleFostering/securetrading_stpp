@@ -24,7 +24,7 @@ $table = $installer->getConnection()
         Varien_Db_Ddl_Table::ACTION_CASCADE, Varien_Db_Ddl_Table::ACTION_CASCADE)
     ->addIndex($installer->getIdxName('securetrading_stpp/requests', array('order_increment_id'), Varien_Db_Adapter_Interface::INDEX_TYPE_UNIQUE),
         array('order_increment_id'), array('type' => Varien_Db_Adapter_Interface::INDEX_TYPE_UNIQUE))
-    ->setComment('Stores SecureTrading STPP Payment Pages request data.  This data is mapped to the response object in the notification.')
+    ->setComment('Stores Secure Trading STPP Payment Pages request data.  This data is mapped to the response object in the notification.')
 ;
 $installer->getConnection()->createTable($table);
 
@@ -58,7 +58,7 @@ $table = $installer->getConnection()
     ->addColumn('type_name', Varien_Db_Ddl_Table::TYPE_VARCHAR, 32, array(
         'nullable' => false,
         ), 'Name')
-    ->setComment('SecureTrading API transaction types (e.g. AUTH, RISKDEC)')
+    ->setComment('Secure Trading API transaction types (e.g. AUTH, RISKDEC)')
 ;
 $installer->getConnection()->createTable($table);
 
@@ -145,7 +145,7 @@ $table = $installer->getConnection()
         Varien_Db_Ddl_Table::ACTION_CASCADE, Varien_Db_Ddl_Table::ACTION_CASCADE)
     ->addIndex($installer->getIdxName('securetrading_stpp/transactions', array('transaction_reference'), Varien_Db_Adapter_Interface::INDEX_TYPE_UNIQUE),
         array('transaction_reference'), array('type' => Varien_Db_Adapter_Interface::INDEX_TYPE_UNIQUE))
-    ->setComment('Stores SecureTrading STPP transaction details.')
+    ->setComment('Stores Secure Trading STPP transaction details.')
 ;
 $installer->getConnection()->createTable($table);
 

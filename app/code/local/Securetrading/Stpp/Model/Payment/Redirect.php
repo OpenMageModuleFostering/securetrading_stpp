@@ -27,8 +27,6 @@ class Securetrading_Stpp_Model_Payment_Redirect extends Securetrading_Stpp_Model
     		$this->_canCapturePartial = true;
     		$this->_canRefund = true;
     		$this->_canRefundInvoicePartial = true;
-    		
-    		$this->_canUseForMultishipping = $this->getConfigData('payment_action') !== Mage_Payment_Model_Method_Abstract::ACTION_AUTHORIZE; // Disable MultiShipping if Auth Only (3237).
     	}
     }
     
@@ -40,14 +38,20 @@ class Securetrading_Stpp_Model_Payment_Redirect extends Securetrading_Stpp_Model
     
     public function acceptPayment(Mage_Payment_Model_Info $payment) {
         $this->log(sprintf('In %s.', __METHOD__));
-        parent::acceptPayment($payment);
-        return $this->_getApi()->acceptPayment($payment);
+		$data = $this->_getApi()->acceptPaymentAndPrepareApiRequest($payment, $this->getConfigData('site_reference'));
+    	if ($data) {
+    		$this->getIntegration()->runApiTransactionUpdate($payment, $data);
+    	}
+    	return true;
     }
     
     public function denyPayment(Mage_Payment_Model_Info $payment) {
         $this->log(sprintf('In %s.', __METHOD__));
-        parent::denyPayment($payment);
-        return $this->_getApi()->denyPayment($payment);
+		$data = $this->_getApi()->denyPaymentAndPrepareApiRequest($payment, $this->getConfigData('site_reference'));
+        if ($data) {
+        	$this->getIntegration()->runApiTransactionUpdate($payment, $data);
+        }
+        return true;
     }
     
     protected function _useFirstPathIfIframe($path1, $path2) {
@@ -99,21 +103,21 @@ class Securetrading_Stpp_Model_Payment_Redirect extends Securetrading_Stpp_Model
     public function capture(Varien_Object $payment, $amount) {
     	$this->log(sprintf('In %s.', __METHOD__));
     	parent::capture($payment, $amount);
-    	$this->_getApi()->captureAuthorized($payment, $amount);
+		$data = $this->_getApi()->prepareToCaptureAuthorized($payment, $amount, $this->getConfigData('site_reference'));
+    	$this->getIntegration()->runApiTransactionUpdate($payment, $data);
     	return $this;
     }
     
     public function refund(Varien_Object $payment, $amount) {
     	$this->log(sprintf('In %s.', __METHOD__));
     	parent::refund($payment, $amount);
-    	$this->_getApi()->refund($payment, $amount);
+		$data = $this->_getApi()->prepareToRefund($payment, $amount, $this->getConfigData('site_reference'));
+    	$this->getIntegration()->runApiRefund($payment, $data);
     	return $this;
     }
     
     public function cancel(Varien_Object $payment) {
-    	$this->log(sprintf('In %s.', __METHOD__));
-    	$this->_getApi()->cancel($payment);
-    	return $this;
+    	return $this; // Do nothing intentionally.
     }
   
     public function prepareData($isMoto = false, array $orderIncrementIds = array(), $sendEmailConfirmation = true) {

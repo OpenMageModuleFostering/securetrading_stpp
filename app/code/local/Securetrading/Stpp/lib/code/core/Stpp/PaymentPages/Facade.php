@@ -45,9 +45,10 @@ class Stpp_PaymentPages_Facade extends Stpp_Facade {
         }
         
         $ppages->setResult($this->newPaymentPagesResult());
+        $ppages->setHttpHelper($this->newHttpHelper());
         return $ppages;
     }
-
+	
     public function newPaymentPagesHelper() {
         $helper = new Stpp_PaymentPages_Helper();
         return $helper;
@@ -55,6 +56,10 @@ class Stpp_PaymentPages_Facade extends Stpp_Facade {
     
     public function newPaymentPagesResult() {
         return new Stpp_PaymentPages_Result();
+    }
+    
+    public function newHttpHelper() {
+    	return new Stpp_Http_Helper();
     }
     
     public function runPaymentPagesStandard(Stpp_Data_Request $request, $adminAction = false) {

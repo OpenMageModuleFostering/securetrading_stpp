@@ -10,17 +10,34 @@ class Securetrading_Stpp_Block_Adminhtml_System_Config_Fieldset_Fields
         return false;
     }
     
+    protected function _isPaymentEnabled($element) {
+		$groupConfig = $this->getGroup($element)->asArray();
+      	$activityPath = isset($groupConfig['activity_path']) ? $groupConfig['activity_path'] : '';
+      	if (empty($activityPath)) {
+        	return false;
+      	}
+      	$isPaymentEnabled = (string) Mage::getSingleton('adminhtml/config_data')->getConfigDataValue($activityPath);
+      	return (bool) $isPaymentEnabled;
+    }
+
     protected function _getHeaderTitleHtml($element) {
         return '
             <div class="config-heading" >
+                 <span style="display: inline-block; width: 16px; float: left; position: relative; left: -6px; top: 8px;">
+                     <img src="' .  $this->getSkinUrl('images/securetrading/stpp/success_16_16.png') . '" style="' . ($this->_isPaymentEnabled($element) ? '' : 'visibility: hidden;') . '" />
+                 </span>
+                 <span style="display: inline-block; width: 120px; float: left;">' .
+          			(($filename = (string) $element->getGroup()->image_logo) ? '<img src="' . $this->getSkinUrl('images/securetrading/stpp/' . $filename) . '" />' : '') . '
+                 </span>
+
                 <div class="heading">
                     <strong>' . $element->getLegend() . '</strong>
                     <span class="heading-intro">' . $element->getComment() . '</span>
                 </div>
                 <div class="button-container">
-                    <button 
-                        type="button" 
-                        class="button" 
+                    <button
+                        type="button"
+                        class="button"
                         id="' . $element->getHtmlId() . '-head"
                         onclick="paypalToggleSolution.call(this, \'' . $element->getHtmlId() . '\', \'' . $this->getUrl('*/*/state') . '\'); return false;"
                     >
@@ -167,6 +184,22 @@ class Securetrading_Stpp_Block_Adminhtml_System_Config_Fieldset_Fields
                         $label = $fields->getLabel(Stpp_Fields_Admin::FIELD_API_WS_CA_FILE);
                         $tooltip = $fields->getDescription(Stpp_Fields_Admin::FIELD_API_WS_CA_FILE);
                         break;
+                    case 'transactionsearch_username':
+                    	$label = $fields->getLabel(Stpp_Fields_Admin::FIELD_TRANSACTIONSEARCH_USERNAME);
+                    	$tooltip = $fields->getDescription(Stpp_Fields_Admin::FIELD_TRANSACTIONSEARCH_USERNAME);
+                    	break;
+                    case 'transactionsearch_password':
+                    	$label = $fields->getLabel(Stpp_Fields_Admin::FIELD_TRANSACTIONSEARCH_PASSWORD);
+                    	$tooltip = $fields->getDescription(Stpp_Fields_Admin::FIELD_TRANSACTIONSEARCH_PASSWORD);
+                    	break;
+                    case 'transactionsearch_verify_ca':
+                    	$label = $fields->getLabel(Stpp_Fields_Admin::FIELD_TRANSACTIONSEARCH_VERIFY_SSL_CA);
+                    	$tooltip = $fields->getDescription(Stpp_Fields_Admin::FIELD_TRANSACTIONSEARCH_VERIFY_SSL_CA);
+                    	break;
+                    case 'transactionsearch_ca_file':
+                    	$label = $fields->getLabel(Stpp_Fields_Admin::FIELD_TRANSACTIONSEARCH_CA_FILE);
+                    	$tooltip = $fields->getDescription(Stpp_Fields_Admin::FIELD_TRANSACTIONSEARCH_CA_FILE);
+                    	break;
                     // The following are not retrieved from the framework but are here so the text is not duplicated across the different interfaces in system.xml.
                     case 'active':
                         $label = $this->__('Enabled');
@@ -198,6 +231,14 @@ class Securetrading_Stpp_Block_Adminhtml_System_Config_Fieldset_Fields
                         $label = $this->__('Iframe Width');
                         $tooltip = $this->__('The width of the iframe.  Enter one or more numbers followed by "px" or "%".');
                         break;
+                    case 'show_start_date':
+                    	$label = $this->__('Show Start Date');
+                    	$tooltip = $this->__('Enable this option to show the start date input field on the payment form.');
+                    	break;
+                    case 'show_issue_number':
+                    	$label = $this->__('Show Issue Number');
+                    	$tooltip = $this->__('Enable this option to show the issue number input field on the payment form.');
+                    	break;
                     default:
                         $label = $e->getLabel();
                         $tooltip = $e->getTooltip();

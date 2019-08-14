@@ -3,6 +3,23 @@
 class Securetrading_Stpp_Model_Actions_Redirect extends Securetrading_Stpp_Model_Actions_Abstract implements Stpp_PaymentPages_ActionsInterface {
     protected $_updates = array();
     
+    protected function _addUpdate(Stpp_Data_Response $response, $update) {
+    	$this->_updates[$this->_getOrder($response)->getId()][] = $update;
+    	return $this;
+    }
+    
+    protected function _hasUpdates(Mage_Sales_Model_Order $order) {
+    	$orderId = $order->getId();
+    	return array_key_exists($orderId, $this->_updates) && !empty($this->_updates[$orderId]);
+    }
+    
+    protected function _getUpdates(Mage_Sales_Model_Order $order) {
+    	if ($this->_hasUpdates($order)) {
+    		return $this->_updates[$order->getId()];
+    	}
+    	return array();
+    }
+    
     protected function _getOrderIncrementIds(Stpp_Data_response $response) {
     	$orderIncrementIdString = $response->get('order_increment_ids', '');
     	
@@ -16,6 +33,10 @@ class Securetrading_Stpp_Model_Actions_Redirect extends Securetrading_Stpp_Model
     		throw new Stpp_Exception(Mage::helper('securetrading_stpp')->__('Invalid order increment IDs.'));
     	}
     	return $orderIncrementIds;
+    }
+    
+    protected function _authShouldEnterPaymentReviewAndBeDenied(Stpp_Data_Response $response) {
+    	return parent::_authShouldEnterPaymentReviewAndBeDenied($response) && $this->_getOrder($response)->getPayment()->getMethodInstance()->getConfigData('ppg_cancel_60107');
     }
     
     public function processAuth(Stpp_Data_Response $response) {
@@ -69,25 +90,31 @@ class Securetrading_Stpp_Model_Actions_Redirect extends Securetrading_Stpp_Model
     }
     
    	public function _processAuth(Stpp_Data_Response $response, $firstOrder) {
-        parent::processAuth($response);
-        
         $order = $this->_getOrder($response);
         $payment = $order->getPayment();
+        
+        if ($order->getStatus() !== Securetrading_Stpp_Model_Payment_Redirect::STATUS_PENDING_PPAGES) {
+        	throw new Stpp_Exception(sprintf(Mage::helper('securetrading_stpp')->__('The order status for order "%s" was not pending payment pages.'), $order->getIncrementId()));
+        }
+        
+        parent::processAuth($response);
         
         $payment->setCcType($response->get('paymenttypedescription'));
         $payment->setCcLast4($payment->getMethodInstance()->getIntegration()->getCcLast4($response->get('maskedpan')));
         $payment->save();
         
-        $this->_updateOrder($response, $order, $firstOrder);
+        $this->_updateOrder($response, $firstOrder);
         
-        if ($response->get('errorcode') === '0') {
-        	Mage::getModel('securetrading_stpp/payment_redirect')->registerSuccessfulOrderAfterExternalRedirect($order, $this->_getRequestedSettleStatus($response));
-        	$emailConfirmation = $response->get('accounttypedescription') === 'MOTO' ? (bool) $response->get('send_confirmation') : true;
-        	$payment->getMethodInstance()->handleSuccessfulPayment($order, $emailConfirmation);
+        if ($this->_paymentIsSuccessful($response) || $this->_authShouldEnterPaymentReview($response)) {
+        	$payment = $order->getPayment();
+	    	Mage::getModel('securetrading_stpp/payment_redirect')->registerSuccessfulOrderAfterExternalRedirect($order, $this->_getRequestedSettleStatus($response));
+	    	$emailConfirmation = $response->get('accounttypedescription') === 'MOTO' ? (bool) $response->get('send_confirmation') : true;
+	    	$payment->getMethodInstance()->handleSuccessfulPayment($order, $emailConfirmation);
         }
     }
     
-    protected function _updateOrder(Stpp_Data_Response $response, Mage_Sales_Model_Order $order, $firstOrder) {
+    protected function _updateOrder(Stpp_Data_Response $response, $firstOrder) {
+    	$order = $this->_getOrder($response);
     	if ($firstOrder) {
     		$addresses = array(
     				'billing' => $order->getBillingAddress(),
@@ -106,8 +133,8 @@ class Securetrading_Stpp_Model_Actions_Redirect extends Securetrading_Stpp_Model
             $address->save();
         }
         
-        if (!empty($this->_updates)) {
-            $message = "Updated the following fields: " . implode(', ', $this->_updates);
+        if ($this->_hasUpdates($order)) {
+            $message = "Updated the following fields: " . implode(', ', $this->_getUpdates($order));
             $order->addStatusHistoryComment($message);
             $order->save();
             $this->_log($response, $message);
@@ -130,7 +157,7 @@ class Securetrading_Stpp_Model_Actions_Redirect extends Securetrading_Stpp_Model
             $value = $response->get($stKey);
             if ($value !== (string) $address->getData($coreKey)) {
                 $address->setData($coreKey, $value);
-                $this->_updates[] = $stKey;
+                $this->_addUpdate($response, $stKey);
             }
         }
     }
@@ -149,7 +176,7 @@ class Securetrading_Stpp_Model_Actions_Redirect extends Securetrading_Stpp_Model
             $oldValue = array_key_exists($streetKey, $street) ? $street[$streetKey] : '';
             if ($value !== (string) $oldValue) {
                 $street[$streetKey] = $value;
-                $this->_updates[] = $stKey;
+                $this->_addUpdate($response, $stKey);
             }
         }
         $address->setStreet($street);
@@ -166,7 +193,7 @@ class Securetrading_Stpp_Model_Actions_Redirect extends Securetrading_Stpp_Model
         }
         if ($addressCountryId !== (string) $stCountryId) {
             $address->setCountryId($stCountryId);
-            $this->_updates[] = $stCountryKey;
+            $this->_addUpdate($response, $stCountryKey);
         }
     }
     
@@ -177,7 +204,7 @@ class Securetrading_Stpp_Model_Actions_Redirect extends Securetrading_Stpp_Model
 
         if ($response->get($stCountyKey) !== (string) $region) {
             $address->setRegionId(null)->setRegion($response->get($stCountyKey));
-            $this->_updates[] = $stCountyKey;
+            $this->_addUpdate($response, $stCountryKey);
         }
     }
     
@@ -208,7 +235,6 @@ class Securetrading_Stpp_Model_Actions_Redirect extends Securetrading_Stpp_Model
             'customeremail',
             'enrolled',
             'errorcode',
-            'errormessage',
             'maskedpan',
             'orderreference',
             'parenttransactionreference',
@@ -220,6 +246,12 @@ class Securetrading_Stpp_Model_Actions_Redirect extends Securetrading_Stpp_Model
             'settlestatus',
             'status',
             'transactionreference',
+        	// custom fields:
+        	'errordata',
+        	'errormessage',
+        	'order_increment_ids',
+        	'send_confirmation',
+        	'fraudcontrolshieldstatuscode',
         );
         
         foreach($fields as $field) {

@@ -40,14 +40,15 @@ class Securetrading_Stpp_Model_Observer {
             'security_address',
             'security_postcode',
             'security_code',
+			'shield_status_code',
             'enrolled',
             'status',
         );
         
         $payment = $observer->getEvent()->getPayment();
-        
-        foreach($data as $key) {
-            $transport = $observer->getEvent()->getTransport();
+        $transport = $observer->getEvent()->getTransport();
+		 
+        foreach($data as $key) {   
             $value = $payment->getAdditionalInformation($key);
             $transport->setData($key, $value);
         }
@@ -60,5 +61,28 @@ class Securetrading_Stpp_Model_Observer {
         $transport->setData('start_year', $payment->getCcSsStartYear());
         $transport->setData('issue_number', $payment->getCcSsIssue());
         $transport->setData('transaction_reference', $payment->getCcTransId());
+    }
+    
+    public function onAdminhtmlInitSystemConfig(Varien_Event_Observer $observer) { // The event this observer is attached to is only present in Magento 1.7.0.1+.
+    	$oneDimensionalSectionsWithFields = $observer->getConfig()->getNode('sections/securetrading_stpp/groups');
+    	$nestedSectionsWithoutFields = $observer->getConfig()->getNode('securetrading_stpp_sections');
+    
+    	foreach($oneDimensionalSectionsWithFields->children() as $group) {
+ 			$emptyFieldElement = $nestedSectionsWithoutFields->xpath('.//' . $group->getName());
+    
+			if (count($emptyFieldElement) !== 1) {
+    			continue;
+    		}
+    		$emptyFieldElement[0]->extend($group);
+    	}
+    	
+    	$observer->getConfig()->getNode('sections')->extend($nestedSectionsWithoutFields);
+    	
+    	$observer->getConfig()->setNode('sections/payment/groups/securetrading_stpp/sort_order', '0');
+    	
+    	// Hide config page from menu:
+    	$observer->getConfig()->setNode('sections/securetrading_stpp/show_in_default', 0);
+    	$observer->getConfig()->setNode('sections/securetrading_stpp/show_in_website', 0);
+    	$observer->getConfig()->setNode('sections/securetrading_stpp/show_in_store', 0);
     }
 }

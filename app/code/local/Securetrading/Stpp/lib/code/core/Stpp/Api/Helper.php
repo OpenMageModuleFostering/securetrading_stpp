@@ -73,8 +73,8 @@ class Stpp_Api_Helper extends Stpp_Component_Abstract implements Stpp_Api_Helper
         
         return $this->generateRequests($originalRequest, $requestTypes);
     }
-    
-    public function prepare3dAuth(Stpp_Data_Request $request) {
+	
+	public function prepare3dAuth(Stpp_Data_Request $request) {
         if (!isset($_POST['MD'])) {
             throw new Stpp_Exception($this->__('The MD has not been set.'));
         }
@@ -82,14 +82,22 @@ class Stpp_Api_Helper extends Stpp_Component_Abstract implements Stpp_Api_Helper
         if (!isset($_POST['PaRes'])) {
             throw new Stpp_Exception($this->__('The PaRes has not been set.'));
         }
-        
-        $request->set('requesttypedescription', Stpp_Types::API_AUTH);
+		
+        if ($this->_useRiskDecision && $this->_useRiskDecisionAfterAuth) {
+			$requestTypes  = array(Stpp_Types::API_AUTH, Stpp_Types::API_RISKDEC);
+        }
+		else {
+			$requestTypes = array(Stpp_Types::API_AUTH);
+		}
+		
         $request->set('md', $_POST['MD']);
         $request->set('pares', $_POST['PaRes']);
         $request->set('accounttypedescription', $this->_calculateAccountTypeDescription(Stpp_Types::API_AUTH));
-        return array($request);
+		
+		return $this->generateRequests($request, $requestTypes);
+
     }
-    
+	
     public function prepareRefund(Stpp_Data_Request $originalRequest) {
         $originalOrderTotal = $originalRequest->get('original_order_total', null);
         $orderTotalPaid = $originalRequest->get('order_total_paid', null);

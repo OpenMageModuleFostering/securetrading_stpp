@@ -1,7 +1,7 @@
 <?php
 
 class Stpp_PaymentPages_Base extends Stpp_Component_Abstract implements Stpp_PaymentPages_BaseInterface {
-    const INTERFACE_NAME = 'SecureTrading Payment Pages';
+    const INTERFACE_NAME = 'Secure Trading Payment Pages';
     
     const PPAGES_CHOICE_URL = 'https://payments.securetrading.net/process/payments/choice';
     
@@ -18,6 +18,8 @@ class Stpp_PaymentPages_Base extends Stpp_Component_Abstract implements Stpp_Pay
     protected $_request;
     
     protected $_result;
+    
+    protected $_httpHelper;
     
     protected $_context;
     
@@ -67,6 +69,7 @@ class Stpp_PaymentPages_Base extends Stpp_Component_Abstract implements Stpp_Pay
     
     public function setResult(Stpp_PaymentPages_ResultInterface $result) {
         $this->_result = $result;
+        return $this;
     }
     
     protected function _getResult() {
@@ -74,6 +77,18 @@ class Stpp_PaymentPages_Base extends Stpp_Component_Abstract implements Stpp_Pay
             throw new Stpp_Exception($this->__('The result object is null.'));
         }
         return $this->_result;
+    }
+    
+    public function setHttpHelper(Stpp_Http_HelperInterface $httpHelper) {
+    	$this->_httpHelper = $httpHelper;
+    	return $this;
+    }
+    
+    public function _getHttpHelper() {
+    	if ($this->_httpHelper === null) {
+    		throw new Stpp_Exception($this->__('The HTTP helper is null.'));
+    	}
+    	return $this->_httpHelper;
     }
     
     public function setUseHttpPost($bool) {
@@ -254,12 +269,24 @@ class Stpp_PaymentPages_Base extends Stpp_Component_Abstract implements Stpp_Pay
         return $this;
     }
     
-    protected function _createNotificationHash() {   
-        $fields = $_POST;
-        unset($fields['responsesitesecurity'], $fields['notificationreference']);
-        ksort($fields);
-        array_push($fields, $this->_notificationPassword);
-        return hash($this->_notificationHashAlgorithm, implode('', $fields));
+    protected function _createResponseSiteSecurityHash(array $fields, $hashAlgorithm, $password) {
+    	unset($fields['responsesitesecurity'], $fields['notificationreference']);
+    	ksort($fields);
+    	array_push($fields, array($password));
+    	
+    	$str = '';
+    	foreach($fields as $k => $vArray) {
+    		$str .= implode('', $vArray);
+    	}
+    	return hash($hashAlgorithm, $str);
+    }
+    
+    protected function _createNotificationHash() {
+    	return $this->_createResponseSiteSecurityHash($this->_getHttpHelper()->retrievePostParams(), $this->_notificationHashAlgorithm, $this->_notificationPassword);
+    }
+    
+    protected function _createRedirectHash() {
+    	return $this->_createResponseSiteSecurityHash($this->_getHttpHelper()->retrieveGetParams(), $this->_siteSecurityHashAlgorithm, $this->_siteSecurityPassword);
     }
     
     protected function _mapResponse() {
@@ -294,13 +321,5 @@ class Stpp_PaymentPages_Base extends Stpp_Component_Abstract implements Stpp_Pay
             }
         }
         return $this;
-    }
-    
-    protected function _createRedirectHash() {
-        $fields = $_GET;
-        unset($fields['responsesitesecurity']);
-        ksort($fields);
-        array_push($fields, $this->_siteSecurityPassword);
-        return hash($this->_siteSecurityHashAlgorithm, implode('', $fields));
     }
 }

@@ -25,7 +25,6 @@ class Stpp_Types implements Stpp_TypesInterface {
     const CARD_ELECTRON = 'ELECTRON';
     const CARD_JCB = 'JCB';
     const CARD_KARENMILLEN = 'KARENMILLEN';
-    const CARD_LASER = 'LASER';
     const CARD_MAESTRO = 'MAESTRO';
     const CARD_MASTERCARD = 'MASTERCARD';
     const CARD_MASTERCARDDEBIT = 'MASTERCARDDEBIT';
@@ -72,7 +71,6 @@ class Stpp_Types implements Stpp_TypesInterface {
             self::CARD_ELECTRON         => 'Electron',
             self::CARD_JCB              => 'JCB',
             self::CARD_KARENMILLEN      => 'Karen Millen',
-            self::CARD_LASER            => 'Laser',
             self::CARD_MAESTRO          => 'Maestro',
             self::CARD_MASTERCARD       => 'Mastercard',
             self::CARD_MASTERCARDDEBIT  => 'Mastercard Debit',
@@ -202,7 +200,7 @@ class Stpp_Types implements Stpp_TypesInterface {
     public static function getStartYears() {
         $startYears = array();
 		
-        for ($i = 20; $i > 0; $i--) {
+        for ($i = 20; $i >= 0; $i--) {
             $year = date('Y', time() - ($i * (60 * 60 * 24 * 365)));
             $startYears[$i] = $year;
         }

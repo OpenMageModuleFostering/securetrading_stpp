@@ -75,12 +75,34 @@ class Securetrading_Stpp_Model_Transaction extends Mage_Core_Model_Abstract {
             if ($graceful) {
                 return false;
             }
-            throw new Stpp_Exception(sprintf(Mage::helper('securetrading_stpp')->__('A transaction with a transaction reference of "%s" cannot be found.'), $parentTransactionReference));
+            throw new Stpp_Exception(sprintf(Mage::helper('securetrading_stpp')->__('A transaction with a transaction reference of "%s" cannot be found.'), $transactionReference));
         }
         return $this;
     }
+    
+    public function getAncestors($includeSelf = true) {
+    	$pt = $this;
+    	$array = array();
+    	while ($pt = $pt->getParentTransaction(true)) {
+    		$array[] = $pt;
+    	}
+    	
+    	if ($includeSelf) {
+    		array_unshift($array, $this);
+    	}
+		return $array;
+    }
+    
+    public function searchAncestorsForRequestType($requestType) {
+    	foreach($this->getAncestors() as $ancestor) {
+    		if ($ancestor->getRequestType() === $requestType) {
+    			return $ancestor;
+    		}
+    	}
+    	return false;
+    }
 	
-	public function findTransactions($orderId, $requestType) {
-		return array_values($this->getCollection()->addFieldToFilter('order_id', $orderId)->addFieldToFilter('request_type', $requestType)->getItems());
-	}
+    public function findTransactions($orderId, $requestType) {
+        return array_values($this->getCollection()->addFieldToFilter('order_id', $orderId)->addFieldToFilter('request_type', $requestType)->getItems());
+    }
 }

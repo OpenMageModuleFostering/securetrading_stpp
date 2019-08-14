@@ -20,10 +20,16 @@ abstract class Stpp_Component_Abstract implements Stpp_Component_BaseInterface {
     }
     
     public function getDebugLog() {
+    	if ($this->_debugLog === null) {
+    		throw new Stpp_Exception('The translator has not been set.');
+    	}
         return $this->_debugLog;
     }
     
     public function getTranslator() {
+    	if ($this->_translator === null) {
+    		throw new Stpp_Exception('The translator has not been set.');
+    	}
         return $this->_translator;
     }
     

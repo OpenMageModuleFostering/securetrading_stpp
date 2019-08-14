@@ -18,6 +18,7 @@ class Securetrading_Stpp_Sales_Order_Create_SecuretradingController extends Mage
         if (!in_array($this->getRequest()->getRequestedActionName(), array('redirect', 'location'))) {
         	Mage::getModel('securetrading_stpp/payment_redirect')->validateOrders($this->_getOrderIncrementIds());
 			$this->_methodInstance = Mage::getModel('securetrading_stpp/payment_redirect')->getFirstMethodInstance($this->_getOrderIncrementIds());
+			$this->_methodInstance->setStore($this->_methodInstance->getInfoInstance()->getOrder()->getStore()->getId());
         }
     }
     
@@ -59,7 +60,13 @@ class Securetrading_Stpp_Sales_Order_Create_SecuretradingController extends Mage
         $this->_redirect('*/sales_order_create_securetrading/location', array('_query' => $queryArgs));
 		
         Mage::getSingleton('adminhtml/session')->clear();
-        Mage::getSingleton('adminhtml/session')->addSuccess($this->__('The order has been created.'));
+        
+        if (Mage::helper('securetrading_stpp')->orderIsSuccessful($orderIncrementId)) {
+        	Mage::getSingleton('adminhtml/session')->addSuccess($this->__('The order has been created.'));
+        }
+        else {
+        	Mage::getSingleton('adminhtml/session')->addError(sprintf($this->__('The order with ID "%s" was not added correctly.'), $orderIncrementId));
+        }
     }
     
     public function locationAction() {

@@ -108,7 +108,7 @@ abstract class Securetrading_Stpp_Model_Payment_Abstract extends Mage_Payment_Mo
         	$order->getPayment()->registerAuthorizationNotification($amount);
         }
         else {
-        	throw new Exception(sprintf('Invalid settle status: %s', $requestedSettleStatus));
+        	throw new Exception(sprintf('Invalid settle status: "%s".', $requestedSettleStatus));
         }
         $order->save();
     }

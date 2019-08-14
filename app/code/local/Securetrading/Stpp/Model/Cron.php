@@ -29,4 +29,10 @@ class Securetrading_Stpp_Model_Cron {
             $item->delete();
         }
     }
+    
+    public function updateOldOrders() {
+    	$startDate = date("Y-m-d", strtotime("-30 day"));
+    	$endDate = date("Y-m-d", strtotime("-8 day"));
+    	Mage::helper('securetrading_stpp')->updateOldOrders($startDate, $endDate);
+    }
 }

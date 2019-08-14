@@ -3,7 +3,7 @@
 <config>
     <modules>
         <Securetrading_Stpp>
-            <version>3.2.1</version>
+            <version>3.3.0</version>
         </Securetrading_Stpp>
     </modules>
     
@@ -35,6 +35,8 @@
         <secure_url>
             <securetrading_redirect_post_onepage>/securetrading/redirect_post_onepage</securetrading_redirect_post_onepage>
             <securetrading_redirect_post_multishipping>/securetrading/redirect_post_multishipping</securetrading_redirect_post_multishipping>
+			<securetrading_direct_post>/securetrading/direct_post</securetrading_direct_post>
+            <securetrading_direct_return>/securetrading/direct/return</securetrading_direct_return>
             <securetrading_payment_location>/securetrading/payment/location</securetrading_payment_location>
         </secure_url>
     </frontend>
@@ -127,9 +129,16 @@
                 </securetrading_stpp>
               </observers>
             </checkout_type_multishipping_create_orders_single>
+            <adminhtml_init_system_config>
+            	<observers>
+            		<securetrading_stpp>
+            			<class>Securetrading_Stpp_Model_Observer</class>
+            			<method>onAdminhtmlInitSystemConfig</method>
+            		</securetrading_stpp>
+            	</observers>
+            </adminhtml_init_system_config>
         </events>
     </global>
-    <!--
     <crontab>
         <jobs>
             <securetrading_stpp_abandoned_order_cleanup>
@@ -140,30 +149,41 @@
                     <model>securetrading_stpp/cron::abandonedOrderCleanup</model>
                 </run>
             </securetrading_stpp_abandoned_order_cleanup>
-            <securetrading_Stpp_Data_Request_table_cleanup>
+            <securetrading_stpp_request_table_cleanup>
                 <schedule>
                     <cron_expr>0 * * * *</cron_expr>
                 </schedule>
                 <run>
                     <model>securetrading_stpp/cron::requestTableCleanup</model>
                 </run>
-            </securetrading_Stpp_Data_Request_table_cleanup>
+            </securetrading_stpp_request_table_cleanup>
+            <securetrading_stpp_update_old_orders>
+            	<schedule>
+                    <cron_expr>0 0 * * *</cron_expr>
+                </schedule>
+                <run>
+                    <model>securetrading_stpp/cron::updateOldOrders</model>
+                </run>
+            </securetrading_stpp_update_old_orders>
         </jobs>
     </crontab>
-    -->
     <default>
         <payment>
-            <securetrading_stpp_direct>
-                <model>securetrading_stpp/payment_direct</model>
+			<securetrading_stpp_direct>
+				<model>securetrading_stpp/payment_direct</model>
                 <accepted_cards backend_model="securetrading_stpp/adminhtml_system_config_backend_multiselect" />
+                <api_iframe_width>100%</api_iframe_width>
+                <api_iframe_height>600px</api_iframe_height>
                 <stapi_alias backend_model="adminhtml/system_config_backend_encrypted" />
                 <stapi_host backend_model="adminhtml/system_config_backend_encrypted" />
                 <stapi_port backend_model="adminhtml/system_config_backend_encrypted" />
                 <ws_alias backend_model="adminhtml/system_config_backend_encrypted" />
                 <ws_username backend_model="adminhtml/system_config_backend_encrypted" />
                 <ws_password backend_model="adminhtml/system_config_backend_encrypted" />
-                <api_iframe_width>100%</api_iframe_width>
-                <api_iframe_height>600px</api_iframe_height>
+                <ws_verify_ca>1</ws_verify_ca>
+                <transactionsearch_username backend_model="adminhtml/system_config_backend_encrypted" />
+                <transactionsearch_password backend_model="adminhtml/system_config_backend_encrypted" />
+                <transactionsearch_verify_ca>1</transactionsearch_verify_ca>
             </securetrading_stpp_direct>
             <securetrading_stpp_redirect>
                 <model>securetrading_stpp/payment_redirect</model>
@@ -175,6 +195,16 @@
                 <ppg_iframe_height>600px</ppg_iframe_height>
                 <parent_css>st.magentoiframeparent</parent_css>
                 <child_js>st.magentoiframechild</child_js>
+                <stapi_alias backend_model="adminhtml/system_config_backend_encrypted" />
+                <stapi_host backend_model="adminhtml/system_config_backend_encrypted" />
+                <stapi_port backend_model="adminhtml/system_config_backend_encrypted" />
+                <ws_alias backend_model="adminhtml/system_config_backend_encrypted" />
+                <ws_username backend_model="adminhtml/system_config_backend_encrypted" />
+                <ws_password backend_model="adminhtml/system_config_backend_encrypted" />
+                <ws_verify_ca>1</ws_verify_ca>
+                <transactionsearch_username backend_model="adminhtml/system_config_backend_encrypted" />
+                <transactionsearch_password backend_model="adminhtml/system_config_backend_encrypted" />
+                <transactionsearch_verify_ca>1</transactionsearch_verify_ca>
             </securetrading_stpp_redirect>
         </payment>
     </default>

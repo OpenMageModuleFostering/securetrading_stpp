@@ -21,6 +21,17 @@
                             </securetrading_transactions>
                         </children>
                     </sales>
+                    <system>
+                        <children>
+                            <config>
+                                <children>
+                                    <securetrading_stpp>
+                                        <title>Secure Trading Config (Magento 1.7.0.0 and lower)</title>
+                                    </securetrading_stpp>
+                                </children>
+                            </config>
+                        </children>
+                    </system>
                 </children>
             </admin>
         </resources>

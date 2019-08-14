@@ -27,8 +27,7 @@ abstract class Securetrading_Stpp_Model_Actions_Abstract extends Stpp_Actions_Ab
 	
 	protected function _getRequestedSettleStatus(Stpp_Data_Response $response) {
 		$transaction = Mage::getModel('securetrading_stpp/transaction')->loadByTransactionReference($response->get('parenttransactionreference'), true);
-		 
-		if ($transaction && $transaction->getResponseType() === Securetrading_Stpp_Model_Transaction_Types::TYPE_THREEDQUERY) {
+		if ($transaction && $transaction->getResponseType() === Securetrading_Stpp_Model_Transaction_Types::TYPE_THREEDQUERY) { // api 3d query used - so auth request didn't have settlestatus so need to get 3dq request.
 			$requestData = $transaction->getRequestData();
 			$requestedSettleStatus = $requestData['settlestatus'];
 		}
@@ -38,61 +37,116 @@ abstract class Securetrading_Stpp_Model_Actions_Abstract extends Stpp_Actions_Ab
 		return (string) $requestedSettleStatus;
 	}
 	
-    public function processAuth(Stpp_Data_Response $response) { // note - this method makes capture transactions closed UNLESS response ss == 2 && request ss !== 2, then they are open. 
+	protected function _getRiskdecTransaction($transactionReference) {
+		if ($transaction = Mage::getModel('securetrading_stpp/transaction')->loadByTransactionReference($transactionReference, true)) {
+			return $transaction->searchAncestorsForRequestType(Securetrading_Stpp_Model_Transaction_Types::TYPE_RISKDEC);
+		}
+		return false;
+	}
+	
+	protected function _riskdecTransactionHasShieldStatusCode($transaction, $shieldStatusCodes) {
+		if (!is_array($shieldStatusCodes)) {
+			$shieldStatusCodes = array($shieldStatusCodes);
+		}
+		if ($transaction->getRequestType() !== Securetrading_Stpp_Model_Transaction_Types::TYPE_RISKDEC) {
+			throw new Stpp_Exception(sprintf(Mage::helper('securetrading_stpp')->__('Invalid transaction type: %s.'), $transaction->getRequestType()));
+		}
+		if (!in_array($transaction->getResponseData('fraudcontrolshieldstatuscode'), $shieldStatusCodes)) {
+			return false;
+		}
+		return true;
+	}
+	
+	protected function _paymentIsSuccessful(Stpp_Data_Response $response) {
+		$result = false;
+		if ($response->get('errorcode') === '0') {
+			if (in_array($response->get('settlestatus'), array('0', '1', '100'), true)) {
+				$result = true;
+			}
+			else if ($response->get('settlestatus') === '2') {
+				if ($this->_getRequestedSettleStatus($response) === '2') {
+					$riskdecTransaction = $this->_getRiskdecTransaction($response->get('parenttransactionreference'));
+					if (!$riskdecTransaction || $this->_riskdecTransactionHasShieldStatusCode($riskdecTransaction, 'ACCEPT')) {
+						$result = true;
+					}
+				}
+			}
+			else {
+				throw new Exception(sprintf(Mage::helper('securetrading_stpp')->__('Invalid settle status: "%s".'), $response->get('settlestatus')));
+			}
+		}
+		return $result;
+	}
+	
+	protected function _authShouldEnterPaymentReview(Stpp_Data_Response $response) {
+		$result = false;
+		if ($response->get('errorcode') === '0' && $response->get('settlestatus') === '2') {
+			if ($this->_getRequestedSettleStatus($response) === '2') {
+				$riskdecTransaction = $this->_getRiskdecTransaction($response->get('parenttransactionreference'));
+				if ($riskdecTransaction && $this->_riskdecTransactionHasShieldStatusCode($riskdecTransaction, array('CHALLENGE', 'DENY'))) {
+					$result = true;
+				}
+			}
+			else {
+				$result = true;
+			}
+		}
+		return $result;
+	}
+	
+	protected function _authShouldEnterPaymentReviewAndBeDenied(Stpp_Data_Response $response) {
+		$result = false;
+		if ($response->get('errorcode') === '60107') {
+			$result = true;
+		}
+		return $result;
+	}
+	//TODO - consistency of auths/captures being open or closed.
+	protected function _paymentReviewAndDeny(Stpp_Data_Response $response, Mage_Sales_Model_Order $order) {
+		$payment = $order->getPayment();
+		$payment->setNotificationResult(true);
+		$payment->registerPaymentReviewAction(Mage_Sales_Model_Order_Payment::REVIEW_ACTION_DENY, false);
+		$this->_setCoreTransaction($response, false);
+		$order->save();
+	}
+	
+	protected function _addGenericErrorToOrderStatusHistory(Stpp_Data_Response $response, Mage_Sales_Model_Order $order) {
+		$message = sprintf('Payment failed: %s - %s.', $response->get('errorcode'), $response->get('errormessage'));
+		$order->addStatusHistoryComment($message, false);
+		$order->save();
+	}
+	
+    public function processAuth(Stpp_Data_Response $response) {
     	$this->_log($response, sprintf('In %s.', __METHOD__));
     	
     	$order = $this->_getOrder($response);
     	$payment = $order->getPayment();
-    	$errorCode = $response->get('errorcode');
     	
-   		if ($order->getStatus() !== Securetrading_Stpp_Model_Payment_Redirect::STATUS_PENDING_PPAGES) {
-    		throw new Stpp_Exception(sprintf(Mage::helper('securetrading_stpp')->__('The order status for order "%s" was not pending payment pages.'), $order->getIncrementId()));
+    	if ($this->_paymentIsSuccessful($response)) {
+			$closeCoreTransaction = $response->get('settlestatus') === '0';
+			$this->_setCoreTransaction($response, $closeCoreTransaction);
     	}
-    	
-    	$addCoreTransaction = true;
-    	$coreTransactionClosed = false;
-    	
-    	if ($errorCode === '0') {
-    		if (in_array($response->get('settlestatus'), array('0', '1', '100'), true)) {
-    			$coreTransactionClosed = true;
-    		}
-    		elseif ($response->get('settlestatus') === '2') {
-    			if ($this->_getRequestedSettleStatus($response) !== '2') {              		
-               		$payment->setIsTransactionPending(true);
-    			}
-    		}
-    		else {
-    			throw new Stpp_Exception(sprintf(Mage::helper('securetrading_stpp')->__('Unhandled settle status: "%s".'), $response->get('settlestatus')));
-    		}
+    	else if ($this->_authShouldEnterPaymentReview($response)) {
+    		$payment->setIsTransactionPending(true);
+    		$this->_setCoreTransaction($response, false);
     	}
-    	elseif($errorCode === '60107') {
-    		$payment->setNotificationResult(true);
-    		$payment->registerPaymentReviewAction(Mage_Sales_Model_Order_Payment::REVIEW_ACTION_DENY, false);
+    	else if ($this->_authShouldEnterPaymentReviewAndBeDenied($response)) {
+    		$this->_paymentReviewAndDeny($response, $order);
     	}
     	else {
-    		$addCoreTransaction = false;
-    		$message = sprintf('Payment failed: %s - %s.', $response->get('errorcode'), $response->get('errormessage'));
-    		$order->addStatusHistoryComment($message, false);
-    	}
-    	
-    	if ($addCoreTransaction) {
-    		$this->_setCoreTransaction($response, $coreTransactionClosed);
+    		$this->_addGenericErrorToOrderStatusHistory($response, $order);
     	}
     	
     	$this->_addTransaction(Securetrading_Stpp_Model_Transaction_Types::TYPE_AUTH, $response);
     	
-    	$additionalInformation = array(
-    			'account_type_description'  => $response->get('accounttypedescription'),
-    			'security_address'          => $response->get('securityresponseaddress'),
-    			'security_postcode'         => $response->get('securityresponsepostcode'),
-    			'security_code'             => $response->get('securityresponsesecuritycode'),
-    			'enrolled'                  => $response->get('enrolled'),
-    			'status'                    => $response->get('status'),
-    	);
-    	
     	$payment
-    		->setAdditionalInformation($additionalInformation)
-	    	->setCcTransId($response->get('transactionreference'))
+    		->setAdditionalInformation('account_type_description', $response->get('accounttypedescription'))
+    		->setAdditionalInformation('security_address', $response->get('securityresponseaddress'))
+    		->setAdditionalInformation('security_postcode', $response->get('securityresponsepostcode'))
+    		->setAdditionalInformation('security_code', $response->get('securityresponsesecuritycode'))
+    		->setAdditionalInformation('enrolled', $response->get('enrolled'))
+    		->setAdditionalInformation('status', $response->get('status'))
+    		->setCcTransId($response->get('transactionreference'))
     		->setCcLast($payment->getMethodInstance()->getIntegration()->getCcLast4($response->get('maskedpan')))
     	;
     	
@@ -109,12 +163,18 @@ abstract class Securetrading_Stpp_Model_Actions_Abstract extends Stpp_Actions_Ab
             ->setTermUrl($response->getRequest()->get('termurl'))
             ->setMd($response->get('md'))
         ;
+            
+        if ($this->_authShouldEnterPaymentReviewAndBeDenied($response)) {
+           	$this->_paymentReviewAndDeny($response, $this->_getOrder($response));
+        }
+            
         return parent::process3dQuery($response);
     }
     
     public function processRiskDecision(Stpp_Data_Response $response) {
         $this->_log($response, sprintf('In %s.', __METHOD__));
         $this->_addTransaction(Securetrading_Stpp_Model_Transaction_Types::TYPE_RISKDEC, $response);
+		$this->_getOrder($response)->getPayment()->setAdditionalInformation('shield_status_code', $response->get('fraudcontrolshieldstatuscode'))->save();
         return parent::processRiskDecision($response);
     }
     
@@ -226,7 +286,7 @@ abstract class Securetrading_Stpp_Model_Actions_Abstract extends Stpp_Actions_Ab
     					)
     			)
     	);
-    	 
+    	
     	if($isClosed !== null) {
     		$payment->setIsTransactionClosed($isClosed);
     	}

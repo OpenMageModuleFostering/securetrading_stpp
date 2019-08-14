@@ -97,53 +97,79 @@ class Stpp_Api_Facade extends Stpp_Facade {
         return $stApiConnection;
     }
     
+    protected function _configureStppHttpBase(Stpp_Http_BaseInterface $object, $key) {
+    	if ($this->_config->has($key . 'username')) {
+    		$object->setUsername($this->_config->get($key . 'username'));
+    	}
+    	
+    	if ($this->_config->has($key . 'password')) {
+    		$object->setPassword($this->_config->get($key . 'password'));
+    	}
+    	
+    	if ($this->_config->has($key . 'connect_timeout')) {
+    		$object->setConnectTimeout($this->_config->get($key . 'connect_timeout'));
+    	}
+    	
+    	if ($this->_config->has($key . 'timeout')) {
+    		$object->setTimeout($this->_config->get($key . 'timeout'));
+    	}
+    	
+    	if ($this->_config->has($key . 'connect_attempts')) {
+    		$object->setConnectAttempts($this->_config->get($key . 'connect_attempts'));
+    	}
+    	
+    	if ($this->_config->has($key . 'connect_retries')) {
+    		$object->setConnectRetries($this->_config->get($key . 'connect_retries'));
+    	}
+    	
+    	if ($this->_config->has($key . 'sleep_useconds')) {
+    		$object->setSleepUseconds($this->_config->get($key . 'sleep_useconds'));
+    	}
+    	
+    	if ($this->_config->has($key . 'ssl_verify_peer')) {
+    		$object->setSslVerifyPeer($this->_config->get($key . 'ssl_verify_peer'));
+    	}
+    	
+    	if ($this->_config->has($key . 'ssl_verify_host')) {
+    		$object->setSslVerifyHost($this->_config->get($key . 'ssl_verify_host'));
+    	}
+    	
+    	if ($this->_config->has($key . 'ssl_cacertfile')) {
+    		$object->setSslCaCertFile($this->_config->get($key . 'ssl_cacertfile'));
+    	}
+    	
+    	if ($this->_config->has($key . 'ssl_check_revoked_certs')) {
+    		$object->setSslCheckCertChainForRevokedCerts($this->_config->get($key . 'ssl_check_revoked_certs'));
+    	}
+    	
+    	if ($this->_config->has($key . 'ssl_deny_revoked_certs')) {
+    		$object->setSslDenyRevokedCerts($this->_config->get($key . 'ssl_deny_revoked_certs'));
+    	}
+    	
+    	if ($this->_config->has($key . 'curl_options')) {
+    		$object->setCurlOptions($this->_config->get($key . 'curl_options'));
+    	}
+    	return $object;
+    }
+    
     public function newApiConnectionWebServices() {
-        $webServicesConnection = new Stpp_Api_Connection_Webservices();
-        
-        if ($this->_config->has('connections/web_services/username')) {
-            $webServicesConnection->setUsername($this->_config->get('connections/web_services/username'));
-        }
-        
-        if ($this->_config->has('connections/web_services/password')) {
-            $webServicesConnection->setPassword($this->_config->get('connections/web_services/password'));
-        }
-        
-        if ($this->_config->has('connections/web_services/alias')) {
-            $webServicesConnection->setAlias($this->_config->get('connections/web_services/alias'));
-        }
-        
-        if ($this->_config->has('connections/web_services/connect_timeout')) {
-        	$webServicesConnection->setConnectTimeout($this->_config->get('connections/web_services/connect_timeout'));
-        }
-        
-        if ($this->_config->has('connections/web_services/timeout')) {
-        	$webServicesConnection->setTimeout($this->_config->get('connections/web_services/timeout'));
-        }
-        
-        if ($this->_config->has('connections/web_services/connect_attempts')) {
-        	$webServicesConnection->setConnectAttempts($this->_config->get('connections/web_services/connect_attempts'));
-        }
-        
-        if ($this->_config->has('connections/web_services/connect_retries')) {
-        	$webServicesConnection->setConnectRetries($this->_config->get('connections/web_services/connect_retries'));
-        }
-        
-        if ($this->_config->has('connections/web_services/sleep_useconds')) {
-        	$webServicesConnection->setSleepUseconds($this->_config->get('connections/web_services/sleep_useconds'));
-        }
-        
-        if ($this->_config->has('connections/web_services/verifyssl')) {
-            $webServicesConnection->setVerifySsl($this->_config->get('connections/web_services/verifyssl'));
-        }
-        
-        if ($this->_config->has('connections/web_services/cacertfile')) {
-            $webServicesConnection->setCaCertFile($this->_config->get('connections/web_services/cacertfile'));
-        }
-        
-        if ($this->_config->has('connections/web_services/options')) {
-            $webServicesConnection->setOptions($this->_config->get('connections/web_services/options'));
-        }
-        return $webServicesConnection;
+    	$webServices = new Stpp_Api_Connection_Webservices();
+    	$key = 'connections/web_services/';
+    	
+    	$this->_configureStppHttpBase($webServices, $key);
+    	
+    	if ($this->_config->has($key . 'alias')) {
+    		$webServices->setAlias($this->_config->get($key . 'alias'));
+    	}
+    	
+    	return $webServices;
+    }
+    
+    public function newTransactionSearch() {
+    	$transactionSearch = new Stpp_Transactionsearch_Base();
+    	$key = 'transactionsearch/';
+    	$this->_configureStppHttpBase($transactionSearch, $key);
+    	return $transactionSearch;
     }
     
     public function newApiXmlWriter() {

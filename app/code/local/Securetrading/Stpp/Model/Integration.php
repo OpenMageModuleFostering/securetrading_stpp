@@ -34,8 +34,9 @@ class Securetrading_Stpp_Model_Integration extends Mage_Core_Model_Abstract {
                         'username'                          => $paymentMethod->getConfigData('ws_username'),
                         'password'                          => $paymentMethod->getConfigData('ws_password'),
                         'alias'                             => $paymentMethod->getConfigData('ws_alias'),
-                        'verifyssl'                         => $paymentMethod->getConfigData('ws_verify_ca'),
-                        'cacertfile'                        => $paymentMethod->getConfigData('ws_ca_file'),
+                        'ssl_verify_peer'                   => $paymentMethod->getConfigData('ws_verify_ca'),
+                    	'ssl_verify_host'					=> 2,
+                        'ssl_cacertfile'                    => $paymentMethod->getConfigData('ws_ca_file'),
                     ),
                     'api' => array(
                         'host'                              => $paymentMethod->getConfigData('stapi_host'),
@@ -70,6 +71,14 @@ class Securetrading_Stpp_Model_Integration extends Mage_Core_Model_Abstract {
                         'use_auto_card_store'               => $paymentMethod->getConfigData('use_auto_card_store'),
                     )
                 ),
+            	'transactionsearch' => array(
+            		'username'								=> $paymentMethod->getConfigData('transactionsearch_username'),
+            		'password'								=> $paymentMethod->getConfigData('transactionsearch_password'),
+            		'ssl_verify_peer'						=> $paymentMethod->getConfigData('transactionsearch_verify_ca'),
+            		'ssl_verify_host'						=> 2,
+            		'ssl_cacertfile'						=> $paymentMethod->getConfigData('transactionsearch_ca_file'),
+            			
+                    )
             );
         }
         
@@ -78,7 +87,7 @@ class Securetrading_Stpp_Model_Integration extends Mage_Core_Model_Abstract {
         
         $this->_facade = Stpp_Facade::instance($config);
         $this->_ppagesFacade = Stpp_PaymentPages_Facade::instance($config);
-        $this->_apiFacade = Stpp_Api_Facade::instance($config);
+        $this->_apiFacade = Magento_Api_Facade::instance($config);
         
         $this->_frontendFields = $fieldFacade->newFrontendFields();
         $this->_adminFields = $fieldFacade->newAdminFields();
@@ -239,6 +248,10 @@ class Securetrading_Stpp_Model_Integration extends Mage_Core_Model_Abstract {
     public function getRefundTransactionName() {
     	return Stpp_Types::API_REFUND;
     }
+	
+	public function getThreedqueryName() {
+		return Stpp_Types::API_THREEDQUERY;
+	}
     
     public function getStartYears() {
         return Stpp_Types::getStartYears();
@@ -294,5 +307,9 @@ class Securetrading_Stpp_Model_Integration extends Mage_Core_Model_Abstract {
     
     public function getCardIssueNumberDescription() {
         return $this->_getFrontendFields()->getDescription(Stpp_Fields_Frontend::FIELD_ISSUE_NUMBER);
+    }
+    
+    public function newTransactionSearch() {
+    	return $this->_apiFacade->newTransactionSearch();
     }
 }

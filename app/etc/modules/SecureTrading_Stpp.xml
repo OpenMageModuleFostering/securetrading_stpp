@@ -3,6 +3,9 @@
         <Securetrading_Stpp>
             <codePool>local</codePool>
             <active>true</active>
+            <depends>
+            	<Securetrading_Multishipping/>
+            </depends>
         </Securetrading_Stpp>
     </modules>
 </config>

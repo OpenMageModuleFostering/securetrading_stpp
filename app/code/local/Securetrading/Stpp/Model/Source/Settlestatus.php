@@ -1,6 +1,6 @@
 <?php
 
-class SecureTrading_Stpp_Model_Source_Settlestatus {
+class Securetrading_Stpp_Model_Source_Settlestatus {
     public function toOptionArray()
     {
         $settleStatuses = Mage::getModel('securetrading_stpp/integration')->getSettleStatuses();

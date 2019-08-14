@@ -13,8 +13,8 @@ class Securetrading_Stpp_Model_Payment_Direct extends Securetrading_Stpp_Model_P
     protected $_canRefund					= true;
     protected $_canRefundInvoicePartial     = true;
     protected $_canVoid                     = false;
-    protected $_canUseInternal              = false;
-    protected $_canUseCheckout              = false;
+    protected $_canUseInternal              = true;
+    protected $_canUseCheckout              = true;
     protected $_canUseForMultishipping      = false;
     protected $_isInitializeNeeded          = true;
     protected $_canFetchTransactionInfo     = false;
@@ -52,7 +52,7 @@ class Securetrading_Stpp_Model_Payment_Direct extends Securetrading_Stpp_Model_P
     	
     	switch ($action) {
     		case Mage_Payment_Model_Method_Abstract::ACTION_AUTHORIZE:
-    			$payment->_authorize(true, $order->getBaseTotalDue()); // base amount will be set inside
+    			$payment->authorize(true, $order->getBaseTotalDue()); // base amount will be set inside
     			$payment->setAmountAuthorized($order->getTotalDue());
     			break;
     		case Mage_Payment_Model_Method_Abstract::ACTION_AUTHORIZE_CAPTURE:
@@ -70,8 +70,7 @@ class Securetrading_Stpp_Model_Payment_Direct extends Securetrading_Stpp_Model_P
     		foreach($this->getInfoInstance()->getOrder()->getStatusHistoryCollection(true) as $c) {
     			$c->delete();
     		}
-    		$invoice->cancel();
-    		$invoice->setIsPaid(false); // when $invoice->pay() is called after this function this stops it from setting the order to paid.
+    		$invoice->setIsPaid(false);
     	}
     }
     
@@ -107,7 +106,7 @@ class Securetrading_Stpp_Model_Payment_Direct extends Securetrading_Stpp_Model_P
     	return false;
     }
     
-    public function refund(Varien_Object $payment, $amount) {
+	public function prepareToRefund(Varien_Object $payment, $amount, $siteReference) {
     	$transactionReference = $payment->getCcTransId();
     	$orderIncrementIds = $this->_getOrderIncrementIds($transactionReference);
     	
@@ -142,79 +141,119 @@ class Securetrading_Stpp_Model_Payment_Direct extends Securetrading_Stpp_Model_P
     			'order_total_refunded'				=> $baseTotalRefunded, // How much has been refunded via TU or REFUND.
     			'amount_to_refund'					=> $amount,
     			'partial_refund_already_processed' 	=> $partialRefundAlreadyProcessed,
-    			'site_reference' 					=> $this->getConfigData('site_reference'),
+				'site_reference'                   	=> $siteReference,
     			'transaction_reference' 			=> $transactionReference,
     			'using_main_amount'					=> true,
     			'currency_iso_3a'					=> $payment->getOrder()->getBaseCurrencyCode(),
     			'allow_suspend'						=> true,
     	);
-    	
+    	$payment->setShouldCloseParentTransaction(false);
+    	return $data;
+    }
+    
+    public function refund(Varien_Object $payment, $amount) {
+		$data = $this->prepareToRefund($payment, $amount, $this->getConfigData('site_reference'));
     	$this->getIntegration()->runApiRefund($payment, $data);
-    	$payment->setParentTransactionId($immediateParentTransactionId); // Ensure the parent transaction reference stored in the core transaction is not the core Authorization.
     	return $this;
     }
     
     public function cancel(Varien_Object $payment) {
     	return $this; // Do nothing intentionally.
     }
-    
-    public function denyPayment(Mage_Payment_Model_Info $payment) {
+	
+	public function denyPaymentAndPrepareApiRequest(Mage_Payment_Model_Info $payment, $siteReference) {
     	parent::denyPayment($payment);
+    	$data = null;
     	
     	if (!empty(self::$_reviewingIncrementIds)) {
     		$payment->setShouldCloseParentTransaction(true);
     		$payment->addTransaction(Mage_Sales_Model_Order_Payment_Transaction::TYPE_VOID);
     	}
     	else {
+    		if ($payment->getOrder()->getState() !== Mage_Sales_Model_Order::STATE_PAYMENT_REVIEW) {
+    			throw new Mage_Core_Exception('This order is no longer in the payment review state.');
+    		}
+    
     		$transactionReference = $payment->getCcTransId();
     		$orderIncrementIds = $this->_getOrderIncrementIds($transactionReference);
     		
+    		if ($orderIncrementIds) {
+    			self::$_reviewingIncrementIds = $orderIncrementIds;
+    			foreach($orderIncrementIds as $orderIncrementId) {
+    				$order = Mage::getModel('sales/order')->loadByIncrementId($orderIncrementId);
+    				$order->getPayment()->deny();
+    				$order->save();
+    			}
+    			self::$_reviewingIncrementIds = array();
+    		}
+    		else {
+    			$payment->setShouldCloseParentTransaction(true);
+    			$payment->addTransaction(Mage_Sales_Model_Order_Payment_Transaction::TYPE_VOID);
+    		}
+			$data = $this->_prepareToUpdateSettleStatus($payment, '3', $siteReference);
+    	}
+    	return $data;
+    }
+    
+	public function acceptPaymentAndPrepareApiRequest(Mage_Payment_Model_Info $payment, $siteReference) {
+    	parent::acceptPayment($payment);
+    	$data = null;
+    	
+    	if (empty(self::$_reviewingIncrementIds)) {
+	    	if ($payment->getOrder()->getState() !== Mage_Sales_Model_Order::STATE_PAYMENT_REVIEW) {
+	    		throw new Mage_Core_Exception('This order is no longer in the payment review state.');
+	    	}
+	    	 
+	    	$transactionReference = $payment->getCcTransId();
+	    	$orderIncrementIds = $this->_getOrderIncrementIds($transactionReference);
+	    	 
 	    	if ($orderIncrementIds) {
-	    		$this->_updateSettleStatus($payment, '3');
 	    		self::$_reviewingIncrementIds = $orderIncrementIds;
-		    	foreach($orderIncrementIds as $orderIncrementId) {
-		    		$order = Mage::getModel('sales/order')->loadByIncrementId($orderIncrementId);
-		    		$order->getPayment()->deny();
-		    		$order->save();
-		    	}
-		    	self::$_reviewingIncrementIds = array();
+	    		foreach($orderIncrementIds as $orderIncrementId) {
+	    			$order = Mage::getModel('sales/order')->loadByIncrementId($orderIncrementId);
+	    			$order->getPayment()->accept();
+	    			$order->save();
+	    		}
+	    		self::$_reviewingIncrementIds = array();
 	    	}
-	    	else {
-	    		$this->_updateSettleStatus($payment, '3');
-	    		$payment->setShouldCloseParentTransaction(true);
-	    		$payment->addTransaction(Mage_Sales_Model_Order_Payment_Transaction::TYPE_VOID);
+	    	 
+	    	$transaction = Mage::getModel('securetrading_stpp/transaction')->loadByTransactionReference($payment->getCcTransId());
+	    	$requestedSettleStatus = $transaction->getRequestData('settlestatus');
+	    	 
+	    	if ($requestedSettleStatus === null) { // Will be null if the $transaction was a 3D AUTH (which has MD/PaRes instead).
+	    		if (!$parentTransaction = $transaction->getParentTransaction(true)) {
+	    			throw new Exception(sprintf(Mage::helper('securetrading_stpp')->__('Payment "%s" had transaction reference "%s" but had no settle status and no parent transaction reference.'), $payment->getId(), $payment->getCcTransId()));
+	    		}
+	    		if ($parentTransaction->getRequestData('requesttypedescription') !== $this->getIntegration()->getThreedqueryName()) {
+	    			throw new Exception(sprintf(Mage::helper('securetrading_stpp')->__('Payment "%s" had transaction reference "%s" but had no settle status and no parent THREEDQUERY.'), $payment->getId(), $payment->getCcTransId()));
+	    		}
+	    		if ($parentTransaction->getRequestData('settlestatus') === null) {
+	    			throw new Exception(sprintf(Mage::helper('securetrading_stpp')->__('Payment "%s" had transaction reference "%s" but had no settle status and its parent THREEDQUERY had no settle status.'), $payment->getId(), $payment->getCcTransId()));
+	    		}
+	    		$requestedSettleStatus = $parentTransaction->getRequestData('settlestatus');
 	    	}
+	    	
+	    	if ($requestedSettleStatus !== 2) { // If the requested settlestatus was 2 there is no need to update the payment (an order should only be put into payment review when the response settlestatus == 2).
+				$data = $this->_prepareToUpdateSettleStatus($payment, $requestedSettleStatus, $siteReference);
+	    	}
+    	}
+    	return $data;
+    }
+    
+    public function acceptPayment(Mage_Payment_Model_Info $payment) {
+		$data = $this->acceptPaymentAndPrepareApiRequest($payment, $this->getConfigData('site_reference'));
+    	if ($data) {
+    		$this->getIntegration()->runApiTransactionUpdate($payment, $data);
     	}
     	return true;
     }
     
-    public function acceptPayment(Mage_Payment_Model_Info $payment) {
-    	parent::acceptPayment($payment);
-    	
-    	if (!empty(self::$_reviewingIncrementIds)) {
-    		return true;
-    	}
-    	
-    	$transactionReference = $payment->getCcTransId();
-    	$orderIncrementIds = $this->_getOrderIncrementIds($transactionReference);
-    	
-    	if ($orderIncrementIds) {
-    		self::$_reviewingIncrementIds = $orderIncrementIds;
-    		foreach($orderIncrementIds as $orderIncrementId) {
-    			$order = Mage::getModel('sales/order')->loadByIncrementId($orderIncrementId);
-    			$order->getPayment()->accept();
-    			$order->save();
-    		}
-    		self::$_reviewingIncrementIds = array();
-    	}
-    	
-    	$transaction = Mage::getModel('securetrading_stpp/transaction')->loadByTransactionReference($payment->getCcTransId());
-    	$requestedSettleStatus = $transaction->getRequestData('settlestatus');
-    	 
-    	if ($requestedSettleStatus !== '2') { // If the requested settlestatus was 2 there is no need to update the payment (an order should only be put into payment review when the response settlestatus == 2).
-    		$this->_updateSettleStatus($payment, $requestedSettleStatus);
-    	}
-    	return true;
+    public function denyPayment(Mage_Payment_Model_Info $payment) {
+		 $data = $this->denyPaymentAndPrepareApiRequest($payment, $this->getConfigData('site_reference'));
+    	 if ($data) {
+			$this->getIntegration()->runApiTransactionUpdate($payment, $data);
+    	 }
+    	 return true;
     }
     
     protected function _getOrderIncrementIds($transactionReference) {
@@ -230,16 +269,17 @@ class Securetrading_Stpp_Model_Payment_Direct extends Securetrading_Stpp_Model_P
     	return null;
     }
     
-    public function captureAuthorized(Mage_Sales_Model_Order_Payment $payment, $amount) {
+	public function prepareToCaptureAuthorized(Mage_Sales_Model_Order_Payment $payment, $amount, $siteReference) {
     	$transactionReference = $payment->getCcTransId();
     	$orderIncrementIds = $this->_getOrderIncrementIds($transactionReference);
+    	
     	if ($orderIncrementIds) {
     		$orderBaseGrandTotal = null;
     		$baseAmountPaid = null;
     		$baseAmountRefunded = null;
     		foreach($orderIncrementIds as $orderIncrementId) {
     			$order = Mage::getModel('sales/order')->loadByIncrementId($orderIncrementId);
-    			$orderBaseGrandTotal = $order->getBaseGrandTotal();
+    			$orderBaseGrandTotal += $order->getBaseGrandTotal();
     			$baseAmountPaid += $order->getPayment()->getBaseAmountPaid();
     			$baseAmountRefunded += $order->getPayment()->getBaseAmountRefunded(); 
     		}
@@ -260,9 +300,14 @@ class Securetrading_Stpp_Model_Payment_Direct extends Securetrading_Stpp_Model_P
     		$updates['currencyiso3a'] = $payment->getOrder()->getBaseCurrencyCode();
     	}
     	
-    	$data = $this->_prepareTransactionUpdate($payment, $updates);
+		$data = $this->_prepareTransactionUpdate($payment, $updates, $siteReference);
+        return $data;
+    }
+    
+    public function captureAuthorized(Mage_Sales_Model_Order_Payment $payment, $amount) {
+		$data = $this->prepareToCaptureAuthorized($payment, $amount, $this->getConfigData('site_reference'));
     	$this->getIntegration()->runApiTransactionUpdate($payment, $data);
-        return $this;
+    	return $this;
     }
     
     protected function _handleStandardPaymentResult(Stpp_Api_ResultInterface $result) {
@@ -284,20 +329,22 @@ class Securetrading_Stpp_Model_Payment_Direct extends Securetrading_Stpp_Model_P
     	elseif(!$result->getIsTransactionSuccessful()) {
     		throw new Mage_Payment_Model_Info_Exception($result->getErrorMessage());
     	}
+    	else {
+    		$this->_getStateObject()->setState(Mage_Sales_Model_Order::STATE_PROCESSING)->setStatus(Mage_Sales_Model_Order::STATE_PROCESSING);
+    	}
     	return $this;
     }
     
-    protected function _updateSettleStatus(Mage_Payment_Model_Info $payment, $settleStatus) {
+	protected function _prepareToUpdateSettleStatus(Mage_Payment_Model_Info $payment, $settleStatus, $siteReference) {
     	$updates = array('settlestatus' => $settleStatus);
-    	$data = $this->_prepareTransactionUpdate($payment, $updates);
-    	$this->getIntegration()->runApiTransactionUpdate($payment, $data);
-    	return $this;
+		$data = $this->_prepareTransactionUpdate($payment, $updates, $siteReference);
+    	return $data;
     }
-    
-    protected function _prepareTransactionUpdate(Mage_Sales_Model_Order_Payment $payment, $updates) {
+	
+	protected function _prepareTransactionUpdate(Mage_Sales_Model_Order_Payment $payment, $updates, $siteReference) {
     	$data = array(
     			'filter' => array(
-    					'sitereference' => $this->getConfigData('site_reference'),
+						'sitereference' => $siteReference,
     					'transactionreference' => $payment->getCcTransId(),
     			),
     			'updates' => $updates
@@ -342,24 +389,32 @@ class Securetrading_Stpp_Model_Payment_Direct extends Securetrading_Stpp_Model_P
     	$data = parent::prepareOrderData($payment, $orderIncrementIds);
         $payment = $this->getInfoInstance();
         
-        return $data += array(
+        $data += array(
             'termurl'       => Mage::getUrl('securetrading/direct/return'),
             'paymenttype'   => $payment->getCcType(),
             'pan'           => $payment->decrypt($payment->getCcNumberEnc()),
-            'startdate'     => $payment->getCcSsStartMonth() . '/' . $payment->getCcSsStartYear(),
             'expirydate'    => $payment->getCcExpMonth() . '/' . $payment->getCcExpYear(),
             'securitycode'  => $payment->decrypt(Mage::getModel('securetrading_stpp/payment_direct_session')->getSecurityCode()),
             'issuenumber'   => $payment->getCcSsIssue(),
         );
+        
+		if ($payment->getCcSsStartMonth() || $payment->getCcSsStartYear()) {
+			$data['startdate'] = $payment->getCcSsStartMonth() . '/' . $payment->getCcSsStartYear();
+		}
+		return $data;
     }
     
     public function run3dAuth() {
     	$this->log(sprintf('In %s.', __METHOD__));
-    	return $this->getIntegration()->runApi3dAuth()->getIsTransactionSuccessful();
+    	$result = $this->getIntegration()->runApi3dAuth();
+    	if ($result->getErrorMessage()) {
+    		Mage::getSingleton('checkout/session')->addError($result->getErrorMessage());
+    	}
+    	return $result->getIsTransactionSuccessful();
     }
     
     public function handleSuccessfulPayment(Mage_Sales_Model_Order $order, $emailConfirmation = true) {
-        parent::handleSuccessfulPayment($order);
+        parent::handleSuccessfulPayment($order, $emailConfirmation);
         Mage::getSingleton('securetrading_stpp/payment_direct_session')->clear();
     }
 }

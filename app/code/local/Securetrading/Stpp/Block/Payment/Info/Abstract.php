@@ -48,6 +48,25 @@ abstract class Securetrading_Stpp_Block_Payment_Info_Abstract extends Mage_Payme
         return $this->_getSecurityCodeStyle($this->getSpecific('security_code'));
     }
     
+	public function getFraudControlShieldStatusCode() {
+		return $this->getSpecific('shield_status_code');
+	}
+	
+	public function getFraudControlShieldStatusCodeStyle() {
+		switch ($this->getSpecific('shield_status_code')) {
+			case 'ACCEPT':
+				$colour = '00AA00';
+				break;
+			case 'CHALLENGE':
+				$colour = 'FF6600';
+				break;
+			case 'DENY':
+			default:
+				$colour = 'FF0000';
+		}
+		return 'color: #' . $colour . ';';
+	}
+	
     public function getTitle() {
         return $this->getInfo()->getMethodInstance()->getTitle();
     }
@@ -62,11 +81,19 @@ abstract class Securetrading_Stpp_Block_Payment_Info_Abstract extends Mage_Payme
     }
     
     public function getEnrolled() {
-        return $this->getSpecific('enrolled', 'N/A');
+        $enrolled = $this->getSpecific('enrolled');
+        if (empty($enrolled)) {
+        	$enrolled = 'N/A';
+        }
+        return $enrolled;
     }
     
     public function getStatus() {
-        return $this->getSpecific('status', 'N/A');
+		$status = $this->getSpecific('status');
+		if (empty($status)) {
+			$status = 'N/A';
+		}
+		return $status;
     }
     
     public function getMystUrl() {
@@ -86,7 +113,7 @@ abstract class Securetrading_Stpp_Block_Payment_Info_Abstract extends Mage_Payme
     }
     
     public function getStartMonth() {
-        return $this->getSpecific('start_month');
+        return sprintf("%02s", $this->getSpecific('start_month'));
     }
     
     public function getStartYear() {
@@ -94,11 +121,16 @@ abstract class Securetrading_Stpp_Block_Payment_Info_Abstract extends Mage_Payme
     }
     
     public function getStartDate() {
-        return $this->getStartMonth() . '/' . $this->getStartYear();
+		$startDate = '';
+		$startYear = $this->getStartYear();
+		if (!empty($startYear)) {
+			$startDate = $this->getStartMonth() . '/' . $this->getStartYear();
+		}
+		return $startDate;
     }
     
     public function getExpiryMonth() {
-        return $this->getSpecific('expiry_month');
+        return sprintf("%02s", $this->getSpecific('expiry_month'));
     }
     
     public function getExpiryYear() {
